@@ -1,5 +1,4 @@
 <?php
-ob_start();
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
@@ -186,7 +185,9 @@ if (strpos($path, '/api/frontend/game-logo/') === 0) {
         header('Location: ' . $bannerUrl, true, 302);
         exit;
     }
+    header('Content-Type: application/json; charset=utf-8');
     http_response_code(404);
+    echo json_encode(['error' => 'Game not found']);
     exit;
 }
 function getTrpcInput() {

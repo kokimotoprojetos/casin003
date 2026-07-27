@@ -8,11 +8,16 @@ register_shutdown_function(function () {
     $e = error_get_last();
     if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
         error_log("PHP Fatal: {$e['message']} in {$e['file']}:{$e['line']}");
+        $ob = @ob_get_contents();
+        if ($ob) @ob_clean();
+        while (@ob_end_clean());
         if (!headers_sent()) {
             header('Content-Type: application/json; charset=utf-8');
             http_response_code(500);
         }
         echo json_encode(['error' => 'Internal Server Error', 'detail' => $e['message']]);
+        @ob_flush();
+        flush();
     }
 });
 
