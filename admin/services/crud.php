@@ -963,6 +963,35 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
         $provedor = 'PGSOFT';
     }
     $game = trim((string)$game);
+    $mapaLegado = [
+        'fortune-tiger' => '126', 'fortunetiger' => '126',
+        'fortune-ox' => '98', 'fortuneox' => '98',
+        'fortune-mouse' => '68', 'fortunemouse' => '68',
+        'fortune-rabbit' => '1543462', 'fortunerabbit' => '1543462',
+        'bikini-paradise' => '69', 'bikiniparadise' => '69',
+        'jungle-delight' => '40', 'jungledelight' => '40',
+        'caishen-wins' => '71', 'caishenwins' => '71',
+        'leprechaun-riches' => '60', 'leprechaunriches' => '60',
+        'ganesha-gold' => '42', 'ganeshagold' => '42',
+        'dreams-of-macau' => '79', 'dreamsofmacau' => '79',
+        'egypts-book-of-mystery' => '73', 'egyptsbookofmystery' => '73',
+        'treasures-of-aztec' => '87', 'treasuresofaztec' => '87',
+        'lucky-neko' => '89', 'luckyneko' => '89',
+        'ways-of-the-qilin' => '106', 'waysoftheqilin' => '106',
+        'wild-bandito' => '104', 'wildbandito' => '104',
+        'fortune-dragon' => '1695365', 'fortunedragon' => '1695365',
+        'alibaba-s-cave-of-fortune' => '1940257', 'anubis-wrath' => '1623475',
+        'asgardian-rising' => '1340277', 'bakery-bonanza' => '1418544',
+        'bali-vacation' => '94', 'battleground-royale' => '124',
+        'battleground-royale-v2' => '124', 'buffalo-win' => '108',
+        'butterfly-blossom' => '125', 'candy-bonanza' => '100',
+        'candy-burst' => '70', 'captains-bounty' => '54',
+        'cash-mania' => '1682240',
+    ];
+    $gameClean = strtolower($game);
+    if (isset($mapaLegado[$gameClean])) {
+        $game = $mapaLegado[$gameClean];
+    }
     // Providers considerados originais na PlayFiver
     $providersOriginais = ['CQ9','JDB','FC','TD','SG','ACEWIN'];
     $isOriginal = in_array($provedor, $providersOriginais, true);
