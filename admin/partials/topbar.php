@@ -1,14 +1,14 @@
 <?php
    ini_set('display_errors', 0);
    error_reporting(E_ALL);
-   include_once "./services/database.php";
-   include_once './logs/registrar_logs.php';
-   include_once "./services/funcao.php";
-   include_once "./services/crud.php";
-   include_once "./services/crud-adm.php";
-   include_once './services/checa_login_adm.php';
-   include_once "./services/CSRF_Protect.php";
-   include_once "./l.php";
+   include_once __DIR__ . "/../services/database.php";
+   include_once __DIR__ . '/../logs/registrar_logs.php';
+   include_once __DIR__ . "/../services/funcao.php";
+   include_once __DIR__ . "/../services/crud.php";
+   include_once __DIR__ . "/../services/crud-adm.php";
+   include_once __DIR__ . '/../services/checa_login_adm.php';
+   include_once __DIR__ . "/../services/CSRF_Protect.php";
+   include_once __DIR__ . "/../l.php";
    $csrf = new CSRF_Protect();
    
    checa_login_adm();
