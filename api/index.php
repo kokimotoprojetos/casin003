@@ -21,7 +21,7 @@ $uri = rtrim($uri, '/') ?: '/';
 
 $cleanRoutes = [
     '/health'                     => '/api/health.php',
-    '/fix-table'                  => '/api/fix_table.php',
+
     '/admin'                      => '/admin/index.php',
     '/admin/login'                => '/admin/auth-login.php',
     '/admin/sair'                 => '/admin/sair.php',
