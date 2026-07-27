@@ -122,6 +122,10 @@
       "continue": true
     },
     {
+      "src": "^/api/test\\.php$",
+      "dest": "/api/test.php"
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
