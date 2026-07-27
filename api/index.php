@@ -1,4 +1,5 @@
 <?php
+error_log("api/index.php invoked: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
 chdir(__DIR__ . '/..');
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
