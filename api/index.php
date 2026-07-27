@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/session_handler.php';
 error_log("api/index.php invoked: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
 if (strpos($_SERVER['REQUEST_URI'] ?? '', 'get-ip') !== false || isset($_GET['get-ip'])) {
     header('Content-Type: application/json');
