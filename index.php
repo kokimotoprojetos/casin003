@@ -13,8 +13,12 @@ require_once DASH . "/services/pega-ip.php";
 require_once DASH . "/services/ip-crawler.php";
 $csrf = new CSRF_Protect();
 $ads_tipo = !empty($_GET['utm_ads']) ? PHP_SEGURO($_GET['utm_ads']) : null;
-$url_atual = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
-$url_base = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}"; // URL sem query string para links de afiliado
+$proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    ? 'https' : 'http';
+$url_atual = $proto . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+$url_base = $proto . "://{$_SERVER['HTTP_HOST']}";
 $referencia = $_SERVER['HTTP_REFERER'] ?? $url_atual;
 $data_hoje = date("Y-m-d");
 $hora_hoje = date("H:i:s");
@@ -393,7 +397,7 @@ $assetVersion = time();
                             "prizePoolValuesList": [],
                             "announcementPopupWay": "merge",
                             "announcementLabelStyle": "bottom",
-                            "gameLogoUrl": "<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . htmlspecialchars($_SERVER['HTTP_HOST']) ?>/api/frontend/game-logo",
+                            "gameLogoUrl": "<?= $proto ?>://<?= htmlspecialchars($_SERVER['HTTP_HOST']) ?>/api/frontend/game-logo",
                             "currencySymbol": "fiat",
                             "avatarBucket": {
                                 "url": "https://upload-us.f-1-g-h.com/avatar/",
@@ -464,7 +468,7 @@ $assetVersion = time();
             },
 
 
-           "apiUrl": "<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . htmlspecialchars($_SERVER['HTTP_HOST']) ?>",
+           "apiUrl": "<?= $proto ?>://<?= htmlspecialchars($_SERVER['HTTP_HOST']) ?>",
             "from": "origin_config",
             "version": "v197",
             "VITE_CAPTCHA_SCENE_ID": "erus05quz",
