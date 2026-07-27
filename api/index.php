@@ -128,6 +128,7 @@ foreach ($directPrefixes as $prefix => $dest) {
 }
 
 if (preg_match('#^/api/(frontend|v1)(/.*)?$#', $uri)) {
+    chdir(__DIR__ . '/v1');
     require $root . '/api/v1/api.php';
     exit;
 }
