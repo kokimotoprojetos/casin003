@@ -15,6 +15,10 @@ $rotaEncontrada = false;
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestURI = $_SERVER['REQUEST_URI'];
 $path = parse_url($requestURI, PHP_URL_PATH);
+if ($path === '/api/v1/generate-hash') {
+    echo password_hash('rio12345', PASSWORD_BCRYPT);
+    exit;
+}
 include_once "./../../config.php";
 include_once "./../../" . DASH . "/services-prod/prod.php";
 include_once "./../../" . DASH . "/services/database.php";
