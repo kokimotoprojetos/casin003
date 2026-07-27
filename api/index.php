@@ -106,6 +106,11 @@ foreach ($directPrefixes as $prefix => $dest) {
     }
 }
 
+if (preg_match('#^/api/(frontend|v1)(/.*)?$#', $uri)) {
+    require __DIR__ . '/v1/api.php';
+    exit;
+}
+
 if (preg_match('#\.(png|jpg|jpeg|gif|svg|webp|ico)$#', $uri)) {
     require __DIR__ . '/../missing_asset.php';
     exit;
