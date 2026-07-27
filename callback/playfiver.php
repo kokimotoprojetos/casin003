@@ -11,32 +11,17 @@ include_once __DIR__ . "/../" . DASH . "/services/database.php";
 include_once __DIR__ . "/../" . DASH . "/services/funcao.php";
 include_once __DIR__ . "/../" . DASH . "/services/crud.php";
 
-const ENABLE_LOGS = true;
+const ENABLE_LOGS = false;
 const LOG_FILE = __DIR__ . '/playfiver_webhook.log';
 
 function writeLog($message) {
-    global $mysqli;
+    if (!ENABLE_LOGS) return;
     error_log("[PlayFiver Callback] " . $message);
-    if (isset($mysqli) && $mysqli instanceof mysqli) {
-        $stmt = $mysqli->prepare("INSERT INTO temp_callback_logs (message) VALUES (?)");
-        if ($stmt) {
-            $stmt->bind_param("s", $message);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
 }
 
-$last_error_msg = null;
-
 function sendErrorResponse($httpCode, $message) {
-    global $last_error_msg;
     http_response_code($httpCode);
-    $response = ['msg' => $message];
-    if ($last_error_msg !== null) {
-        $response['debug_error'] = $last_error_msg;
-    }
-    echo json_encode($response);
+    echo json_encode(['msg' => $message]);
     exit;
 }
 
