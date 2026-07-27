@@ -1,14 +1,19 @@
 {
   "version": 2,
-  "functions": {
-    "api/test.js": {
-      "maxDuration": 10
+  "builds": [
+    {
+      "src": "api/index.php",
+      "use": "vercel-php@0.9.0"
+    },
+    {
+      "src": "api/v1/api.php",
+      "use": "vercel-php@0.9.0"
     }
-  },
+  ],
   "routes": [
     {
-      "src": "^/api/test\\.js$",
-      "dest": "/api/test.js"
+      "src": "/(.*)",
+      "dest": "/api/index.php"
     }
   ]
 }
