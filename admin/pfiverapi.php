@@ -31,14 +31,16 @@ function update_playfiver_config($data)
         url = ?, 
         agent_code = ?, 
         agent_token = ?, 
+        agent_secret = ?, 
         ativo = ?
         WHERE id = 1");
 
     $qry->bind_param(
-        "sssi",
+        "ssssi",
         $data['url'],
         $data['agent_code'],
         $data['agent_token'],
+        $data['agent_secret'],
         $data['ativo']
     );
     return $qry->execute();
@@ -54,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'url' => $_POST['url_playfiver'],
             'agent_code' => $_POST['agent_code_playfiver'],
             'agent_token' => $_POST['agent_token_playfiver'],
+            'agent_secret' => $_POST['agent_secret_playfiver'],
             'ativo' => intval($_POST['ativo_playfiver']),
         ];
 
@@ -102,7 +105,7 @@ $playfiver_config = get_playfiver_config();
                                         <div class="col-md-6">
                                             <div class="card mb-4">
                                                 <div class="card-body">
-                                                    <h5 class="card-title">URL</h5>
+                                                    <h5 class="card-title">URL da API</h5>
                                                     <input type="text" name="url_playfiver" class="form-control" value="<?= $playfiver_config['url'] ?>" required>
                                                 </div>
                                             </div>
@@ -111,13 +114,9 @@ $playfiver_config = get_playfiver_config();
                                         <div class="col-md-6">
                                             <div class="card mb-4">
                                                 <div class="card-body">
-                                                    <h5 class="card-title">Agent Token</h5>
+                                                    <h5 class="card-title">ID Único / Código do Agente (Agent Code)</h5>
                                                     <div class="input-group">
-                                                    <input type="password" id="agent_code_playfiver" name="agent_code_playfiver" class="form-control" value="<?= $playfiver_config['agent_code'] ?>" required>
-                                                        <span class="input-group-text"
-                                                            onclick="togglePassword('agent_code_playfiver', this)">
-                                                            <i class="fas fa-eye"></i>
-                                                        </span>
+                                                        <input type="text" id="agent_code_playfiver" name="agent_code_playfiver" class="form-control" value="<?= $playfiver_config['agent_code'] ?>" required>
                                                     </div>
                                                 </div>
                                             </div>
@@ -126,9 +125,9 @@ $playfiver_config = get_playfiver_config();
                                         <div class="col-md-6">
                                             <div class="card mb-4">
                                                 <div class="card-body">
-                                                    <h5 class="card-title">Agent Secret</h5>
+                                                    <h5 class="card-title">Token do Agente (Agent Token)</h5>
                                                     <div class="input-group">
-                                                    <input type="password" id="agent_token_playfiver" name="agent_token_playfiver" class="form-control" value="<?= $playfiver_config['agent_token'] ?>" required>
+                                                        <input type="password" id="agent_token_playfiver" name="agent_token_playfiver" class="form-control" value="<?= $playfiver_config['agent_token'] ?>" required>
                                                         <span class="input-group-text"
                                                             onclick="togglePassword('agent_token_playfiver', this)">
                                                             <i class="fas fa-eye"></i>
@@ -138,8 +137,23 @@ $playfiver_config = get_playfiver_config();
                                             </div>
                                         </div>
 
-                                            <!-- Status Ativo -->
-                                            <div class="col-md-6">
+                                        <div class="col-md-6">
+                                            <div class="card mb-4">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Chave Secreta (Secret Key)</h5>
+                                                    <div class="input-group">
+                                                        <input type="password" id="agent_secret_playfiver" name="agent_secret_playfiver" class="form-control" value="<?= $playfiver_config['agent_secret'] ?>" required>
+                                                        <span class="input-group-text"
+                                                            onclick="togglePassword('agent_secret_playfiver', this)">
+                                                            <i class="fas fa-eye"></i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Status Ativo -->
+                                        <div class="col-md-6">
                                             <div class="card mb-4">
                                                 <div class="card-body">
                                                     <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>
@@ -147,11 +161,9 @@ $playfiver_config = get_playfiver_config();
                                                         <option value="1" <?= $playfiver_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>
                                                         <option value="0" <?= $playfiver_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>
                                                     </select>
-
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- Outros campos... -->
                                     </div>
                                     <div class="text-center">
                                         <button type="submit" class="btn btn-success">Salvar Configurações</button>
