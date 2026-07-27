@@ -1,10 +1,13 @@
 <?php
 /* Dependencias Da Api */
-include_once "../config.php";
-include_once "../" . DASH . "/services-prod/prod.php";
-include_once "../" . DASH . "/services/database.php";
-include_once "../" . DASH . "/services/funcao.php";
-include_once "../" . DASH . "/services/crud.php";
+include_once __DIR__ . "/../config.php";
+if (!defined('DASH')) {
+    define('DASH', 'admin');
+}
+include_once __DIR__ . "/../" . DASH . "/services-prod/prod.php";
+include_once __DIR__ . "/../" . DASH . "/services/database.php";
+include_once __DIR__ . "/../" . DASH . "/services/funcao.php";
+include_once __DIR__ . "/../" . DASH . "/services/crud.php";
 
 function registrarLog($requestData, $responseData) {
     $logFile = 'user_balance.json';

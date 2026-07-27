@@ -2,12 +2,14 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-/* Dependencias Da Api */
-include_once "../config.php";
-include_once "../" . DASH . "/services-prod/prod.php";
-include_once "../" . DASH . "/services/database.php";
-include_once "../" . DASH . "/services/funcao.php";
-include_once "../" . DASH . "/services/crud.php";
+include_once __DIR__ . "/../config.php";
+if (!defined('DASH')) {
+    define('DASH', 'admin');
+}
+include_once __DIR__ . "/../" . DASH . "/services-prod/prod.php";
+include_once __DIR__ . "/../" . DASH . "/services/database.php";
+include_once __DIR__ . "/../" . DASH . "/services/funcao.php";
+include_once __DIR__ . "/../" . DASH . "/services/crud.php";
 
 const ENABLE_LOGS = false;
 const LOG_FILE = __DIR__ . '/ppclone_webhook.log';
