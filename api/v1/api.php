@@ -182,6 +182,7 @@ if (strpos($path, '/api/frontend/game-logo/') === 0) {
         }
     }
     if ($bannerUrl) {
+        header('Cache-Control: public, max-age=86400, immutable');
         header('Location: ' . $bannerUrl, true, 302);
         exit;
     }
