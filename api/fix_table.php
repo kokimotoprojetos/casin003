@@ -10,8 +10,11 @@ $q = $mysqli->query("SHOW CREATE TABLE visita_site");
 $r = $q->fetch_assoc();
 echo $r['Create Table'] . "\n\n";
 
-// Fix: ensure id has AUTO_INCREMENT
-$mysqli->query("ALTER TABLE visita_site MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT");
+// Disable sql_require_primary_key for this session (Aiven default is ON)
+$mysqli->query("SET SESSION sql_require_primary_key = 0");
+
+// Fix: add primary key + auto_increment to id
+$mysqli->query("ALTER TABLE visita_site MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT PRIMARY KEY");
 
 echo "After fix:\n";
 $q = $mysqli->query("SHOW CREATE TABLE visita_site");
