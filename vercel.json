@@ -10,63 +10,51 @@
   "routes": [
     {
       "src": "^/assets/(.*)",
-      "dest": "/assets/$1",
-      "continue": true
+      "dest": "/assets/$1"
     },
     {
       "src": "^/uploads/(.*)",
-      "dest": "/uploads/$1",
-      "continue": true
+      "dest": "/uploads/$1"
     },
     {
       "src": "^/images/(.*)",
-      "dest": "/images/$1",
-      "continue": true
+      "dest": "/images/$1"
     },
     {
       "src": "^/img/(.*)",
-      "dest": "/img/$1",
-      "continue": true
+      "dest": "/img/$1"
     },
     {
       "src": "^/imgs/(.*)",
-      "dest": "/imgs/$1",
-      "continue": true
+      "dest": "/imgs/$1"
     },
     {
       "src": "^/svg/(.*)",
-      "dest": "/svg/$1",
-      "continue": true
+      "dest": "/svg/$1"
     },
     {
       "src": "^/icons/(.*)",
-      "dest": "/icons/$1",
-      "continue": true
+      "dest": "/icons/$1"
     },
     {
       "src": "^/gif/(.*)",
-      "dest": "/gif/$1",
-      "continue": true
+      "dest": "/gif/$1"
     },
     {
       "src": "^/theme/(.*)",
-      "dest": "/theme/$1",
-      "continue": true
+      "dest": "/theme/$1"
     },
     {
       "src": "^/themes/(.*)",
-      "dest": "/themes/$1",
-      "continue": true
+      "dest": "/themes/$1"
     },
     {
       "src": "^/sw/(.*)",
-      "dest": "/sw/$1",
-      "continue": true
+      "dest": "/sw/$1"
     },
     {
       "src": "^/versionControl/(.*)",
-      "dest": "/versionControl/$1",
-      "continue": true
+      "dest": "/versionControl/$1"
     },
     {
       "src": "/(.*)",
