@@ -6,9 +6,11 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uri, '/') ?: '/';
 
 $cleanRoutes = [
+    '/admin'                      => '/admin/index.php',
     '/admin/login'                => '/admin/auth-login.php',
     '/admin/sair'                 => '/admin/sair.php',
     '/admin/dashboard'            => '/admin/index.php',
+    '/admin/logout'               => '/admin/sair.php',
     '/admin/contas-demos'         => '/admin/contasdemos.php',
     '/admin/gerenciamento-nomes'  => '/admin/ge-nomes.php',
     '/admin/pixel'                => '/admin/pixeis.php',
@@ -71,50 +73,52 @@ $directPrefixes = [
     '/playfiver/webhook' => '/callback/playfiver.php',
 ];
 
+$root = __DIR__ . '/..';
+
 if (isset($cleanRoutes[$uri])) {
-    require __DIR__ . $cleanRoutes[$uri];
+    require $root . $cleanRoutes[$uri];
     exit;
 }
 
 foreach ($slugRoutes as $pattern => $dest) {
     if (preg_match($pattern, $uri, $m)) {
         $_GET['slug'] = $m[1];
-        require __DIR__ . $dest;
+        require $root . $dest;
         exit;
     }
 }
 
 if (preg_match('#^/admin/([a-zA-Z0-9_-]+)$#', $uri, $m)) {
     $file = '/admin/' . $m[1] . '.php';
-    if (file_exists(__DIR__ . $file)) {
-        require __DIR__ . $file;
+    if (file_exists($root . $file)) {
+        require $root . $file;
         exit;
     }
 }
 
 if (preg_match('#^/(callback|callbackpayment)/([a-zA-Z0-9_-]+)$#', $uri, $m)) {
     $file = '/' . $m[1] . '/' . $m[2] . '.php';
-    if (file_exists(__DIR__ . $file)) {
-        require __DIR__ . $file;
+    if (file_exists($root . $file)) {
+        require $root . $file;
         exit;
     }
 }
 
 foreach ($directPrefixes as $prefix => $dest) {
     if (strpos($uri . '/', $prefix . '/') === 0) {
-        require __DIR__ . $dest;
+        require $root . $dest;
         exit;
     }
 }
 
 if (preg_match('#^/api/(frontend|v1)(/.*)?$#', $uri)) {
-    require __DIR__ . '/v1/api.php';
+    require $root . '/api/v1/api.php';
     exit;
 }
 
 if (preg_match('#\.(png|jpg|jpeg|gif|svg|webp|ico)$#', $uri)) {
-    require __DIR__ . '/../missing_asset.php';
+    require $root . '/missing_asset.php';
     exit;
 }
 
-require __DIR__ . '/../index.php';
+require $root . '/index.php';
