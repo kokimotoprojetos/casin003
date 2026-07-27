@@ -1,0 +1,10 @@
+node_modules/
+.vscode/
+.git/
+*.log
+*.bak
+db.sql
+vercel_schema.sql
+daanrox.txt
+errorlog.log
+online_users.json

@@ -1,0 +1,2 @@
+[2026-03-12 19:26:33] Saldo adicionado com sucesso para usuário 803917213: +30 (saldo anterior: 30.16, novo saldo: 60.16)
+[2026-03-12 19:33:43] Saldo adicionado com sucesso para usuário 803917213: +30 (saldo anterior: 60.16, novo saldo: 90.16)

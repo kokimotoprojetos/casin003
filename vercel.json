@@ -1,0 +1,390 @@
+{
+  "version": 2,
+  "functions": {
+    "**/*.php": {
+      "runtime": "vercel-php@0.7.1",
+      "maxDuration": 60
+    }
+  },
+  "routes": [
+    {
+      "src": "^/api/frontend/(.*)",
+      "dest": "/api/v1/api.php",
+      "continue": true
+    },
+    {
+      "src": "^/gold_api(.*)",
+      "dest": "/callback/game_callback.php",
+      "continue": true
+    },
+    {
+      "src": "^/infinitysoft_api(.*)",
+      "dest": "/callback/game_callback.php",
+      "continue": true
+    },
+    {
+      "src": "^/igamewin(.*)",
+      "dest": "/callback/igamewin.php",
+      "continue": true
+    },
+    {
+      "src": "^/ppclone(.*)",
+      "dest": "/callback/ppclone.php",
+      "continue": true
+    },
+    {
+      "src": "^/drakon_api(.*)",
+      "dest": "/callback/drakon.php",
+      "continue": true
+    },
+    {
+      "src": "^/playfiver/webhook(.*)",
+      "dest": "/callback/playfiver.php",
+      "continue": true
+    },
+    {
+      "src": "^/callback/user_balance$",
+      "dest": "/callback/user_balance.php",
+      "continue": true
+    },
+    {
+      "src": "^/callback/game_callback$",
+      "dest": "/callback/game_callback.php",
+      "continue": true
+    },
+    {
+      "src": "^/callback/igamewin$",
+      "dest": "/callback/igamewin.php",
+      "continue": true
+    },
+    {
+      "src": "^/callback/ppclone$",
+      "dest": "/callback/ppclone.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/suitpay$",
+      "dest": "/callbackpayment/suitpay.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/expfypay$",
+      "dest": "/callbackpayment/expfypay.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/bspay$",
+      "dest": "/callbackpayment/bspay.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/aurenpay$",
+      "dest": "/callbackpayment/aurenpay.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/greepay$",
+      "dest": "/callbackpayment/greepay.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/versell$",
+      "dest": "/callbackpayment/versell.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/webhook$",
+      "dest": "/callbackpayment/webhook.php",
+      "continue": true
+    },
+    {
+      "src": "^/callbackpayment/inpagamentos$",
+      "dest": "/callbackpayment/inpagamentos.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/login$",
+      "dest": "/admin/auth-login.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/sair$",
+      "dest": "/admin/sair.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/dashboard$",
+      "dest": "/admin/index.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/contas-demos$",
+      "dest": "/admin/contasdemos.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/gerenciamento-nomes$",
+      "dest": "/admin/ge-nomes.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/pixel$",
+      "dest": "/admin/pixeis.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/identidade-visual$",
+      "dest": "/admin/imagens-plataforma.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/banners$",
+      "dest": "/admin/editar-banners.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/festival$",
+      "dest": "/admin/editar-festival.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/promocoes$",
+      "dest": "/admin/editar-promocoes.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/cupons$",
+      "dest": "/admin/ge-cupons.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/popups$",
+      "dest": "/admin/editar-popups.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/baixarpop$",
+      "dest": "/admin/popup-baixar.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/iconesfloat$",
+      "dest": "/admin/editar-floats.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/gamesbeeplay$",
+      "dest": "/admin/beeplay.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/chavesplayfiver$",
+      "dest": "/admin/pfiverapi.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/historicosplay$",
+      "dest": "/admin/historico_jogadas.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/logsbonus$",
+      "dest": "/admin/logs_cupons.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/niveislogs$",
+      "dest": "/admin/logs_niveis.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/niveis$",
+      "dest": "/admin/ge-vips.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/webhooks$",
+      "dest": "/admin/webhook.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/depositos-pendentes$",
+      "dest": "/admin/depositos_pendentes.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/all-depositos$",
+      "dest": "/admin/depositos_pagos.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/saques_pen$",
+      "dest": "/admin/saques_pendentes.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/all01-saques$",
+      "dest": "/admin/saques_aprovados.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/saldo-api-js$",
+      "dest": "/admin/saldo-api-js.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/slots-games$",
+      "dest": "/admin/jogos.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/config_afiliados$",
+      "dest": "/admin/gerenciamento-afiliados.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/mensagens$",
+      "dest": "/admin/editar-mensagens.php",
+      "continue": true
+    },
+    {
+      "src": "^/admin/detalhes_usuario=(.*)",
+      "dest": "/admin/detalhes_usuario.php?slug=$1",
+      "continue": true
+    },
+    {
+      "src": "^/admin/games=(.*)",
+      "dest": "/admin/games.php?slug=$1",
+      "continue": true
+    },
+    {
+      "src": "^/admin/edit_banner=(.*)",
+      "dest": "/admin/edit_banner.php?slug=$1",
+      "continue": true
+    },
+    {
+      "src": "^/admin/edit_popups=(.*)",
+      "dest": "/admin/edit_popups.php?slug=$1",
+      "continue": true
+    },
+    {
+      "src": "^/admin/([^/]+)$",
+      "dest": "/admin/$1.php",
+      "continue": true
+    },
+    {
+      "src": "^/assets/(.*)",
+      "dest": "/assets/$1",
+      "continue": true
+    },
+    {
+      "src": "^/uploads/(.*)",
+      "dest": "/uploads/$1",
+      "continue": true
+    },
+    {
+      "src": "^/storage/(.*)",
+      "dest": "/storage/$1",
+      "continue": true
+    },
+    {
+      "src": "^/images/(.*)",
+      "dest": "/images/$1",
+      "continue": true
+    },
+    {
+      "src": "^/imgs/(.*)",
+      "dest": "/imgs/$1",
+      "continue": true
+    },
+    {
+      "src": "^/img/(.*)",
+      "dest": "/img/$1",
+      "continue": true
+    },
+    {
+      "src": "^/svg/(.*)",
+      "dest": "/svg/$1",
+      "continue": true
+    },
+    {
+      "src": "^/icons/(.*)",
+      "dest": "/icons/$1",
+      "continue": true
+    },
+    {
+      "src": "^/gif/(.*)",
+      "dest": "/gif/$1",
+      "continue": true
+    },
+    {
+      "src": "^/image/(.*)",
+      "dest": "/image/$1",
+      "continue": true
+    },
+    {
+      "src": "^/theme/(.*)",
+      "dest": "/theme/$1",
+      "continue": true
+    },
+    {
+      "src": "^/themes/(.*)",
+      "dest": "/themes/$1",
+      "continue": true
+    },
+    {
+      "src": "^/sw/(.*)",
+      "dest": "/sw/$1",
+      "continue": true
+    },
+    {
+      "src": "^/dash/assets/(.*)",
+      "dest": "/dash/assets/$1",
+      "continue": true
+    },
+    {
+      "src": "^/admin/assets/(.*)",
+      "dest": "/admin/assets/$1",
+      "continue": true
+    },
+    {
+      "src": "^/src/components/(.*)",
+      "dest": "/src/components/$1",
+      "continue": true
+    },
+    {
+      "src": "^/sw\\.produce\\.min\\.2\\.1\\.6\\.js$",
+      "dest": "/sw.produce.min.2.1.6.js",
+      "continue": true
+    },
+    {
+      "src": "^/version\\.js$",
+      "dest": "/version.js",
+      "continue": true
+    },
+    {
+      "src": "^/favicon\\.ico$",
+      "dest": "/favicon.ico",
+      "continue": true
+    },
+    {
+      "src": "^/favicon\\.png$",
+      "dest": "/favicon.png",
+      "continue": true
+    },
+    {
+      "src": "^/logo\\.png\\.webp$",
+      "dest": "/logo.png.webp",
+      "continue": true
+    },
+    {
+      "src": "/(.*)\\.(png|jpg|jpeg|gif|svg|webp|ico)$",
+      "dest": "/missing_asset.php",
+      "continue": true
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.php"
+    }
+  ]
+}

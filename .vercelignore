@@ -1,0 +1,10 @@
+db.sql
+*.md
+.git
+.vscode
+node_modules
+error.log
+errorlog.log
+daanrox.txt
+*.log
+*.bak
