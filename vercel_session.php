@@ -19,6 +19,7 @@ class VercelSessionHandler implements SessionHandlerInterface
         $port = (int)(getenv('DB_PORT') ?: 18533);
         try {
             $this->mysqli = new mysqli();
+            $this->mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5);
             $this->mysqli->ssl_set(null, null, null, null, null);
             $this->mysqli->real_connect($host, $user, $pass, $db, $port, null, MYSQLI_CLIENT_SSL);
             if ($this->mysqli->connect_errno) {

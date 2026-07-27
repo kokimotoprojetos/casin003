@@ -24,6 +24,7 @@ if (!defined('DATABASE_LOADED')) {
 
     try {
         $mysqli = new mysqli();
+        $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5);
         $mysqli->ssl_set(null, null, null, null, null);
         $mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, MYSQLI_CLIENT_SSL);
     } catch (Exception $e) {

@@ -1,6 +1,20 @@
 <?php
 error_log("api/index.php invoked: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
 chdir(__DIR__ . '/..');
+set_error_handler(function ($severity, $message, $file, $line) {
+    error_log("PHP Error [$severity] $message in $file:$line");
+});
+register_shutdown_function(function () {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        error_log("PHP Fatal: {$e['message']} in {$e['file']}:{$e['line']}");
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(500);
+        }
+        echo json_encode(['error' => 'Internal Server Error', 'detail' => $e['message']]);
+    }
+});
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uri, '/') ?: '/';
