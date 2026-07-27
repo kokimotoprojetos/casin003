@@ -6,6 +6,7 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uri, '/') ?: '/';
 
 $cleanRoutes = [
+    '/health'                     => '/api/health.php',
     '/admin'                      => '/admin/index.php',
     '/admin/login'                => '/admin/auth-login.php',
     '/admin/sair'                 => '/admin/sair.php',
