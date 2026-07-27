@@ -69,10 +69,6 @@
       "continue": true
     },
     {
-      "src": "^/api/health\\.php$",
-      "dest": "/api/health.php"
-    },
-    {
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
