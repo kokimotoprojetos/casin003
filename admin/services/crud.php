@@ -419,6 +419,43 @@ function enviarRequest($url, $config)
     return $response;
 }
 
+function enviarRequestPlayFiver($url, $config, $proxy = null)
+{
+    $ch = curl_init();
+    $headerArray = [
+        'Content-Type: application/json',
+        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ];
+
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $config);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headerArray);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+
+    if (!empty($proxy) && trim($proxy) !== '') {
+        $proxy = trim($proxy);
+        if (strpos($proxy, '://') !== false) {
+            curl_setopt($ch, CURLOPT_PROXY, $proxy);
+        } elseif (strpos($proxy, '@') !== false) {
+            list($auth, $hostport) = explode('@', $proxy, 2);
+            curl_setopt($ch, CURLOPT_PROXY, $hostport);
+            curl_setopt($ch, CURLOPT_PROXYUSERPWD, $auth);
+        } else {
+            curl_setopt($ch, CURLOPT_PROXY, $proxy);
+        }
+    }
+
+    $response = curl_exec($ch);
+    if ($response === false) {
+        error_log("[PlayFiver] Erro cURL (proxy: " . ($proxy ?: 'nenhum') . "): " . curl_error($ch));
+    }
+    curl_close($ch);
+    return $response;
+}
+
 
 function logMessage($message) {
     $logFile = 'log.txt'; // Caminho para o arquivo de log
@@ -953,7 +990,7 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
     // Log para debug
     error_log("[PlayFiver] Request: " . $json_data);
     
-    $response = enviarRequest($keys['url'] . '/api/v2/game_launch', $json_data);
+    $response = enviarRequestPlayFiver($keys['url'] . '/api/v2/game_launch', $json_data, $keys['proxy'] ?? null);
     $data_response = json_decode($response, true);
     
     error_log("[PlayFiver] Response: " . $response);
@@ -993,7 +1030,7 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
         );
         $fallbackJson = json_encode($fallbackPayload);
         error_log("[PlayFiver] Fallback Request: " . $fallbackJson);
-        $fallbackResp = enviarRequest($keys['url'], $fallbackJson);
+        $fallbackResp = enviarRequestPlayFiver($keys['url'], $fallbackJson, $keys['proxy'] ?? null);
         $fallbackData = json_decode($fallbackResp, true);
         error_log("[PlayFiver] Fallback Response: " . $fallbackResp);
         if (isset($fallbackData['status']) && intval($fallbackData['status']) === 1) {

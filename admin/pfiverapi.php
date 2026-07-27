@@ -32,15 +32,17 @@ function update_playfiver_config($data)
         agent_code = ?, 
         agent_token = ?, 
         agent_secret = ?, 
+        proxy = ?,
         ativo = ?
         WHERE id = 1");
 
     $qry->bind_param(
-        "ssssi",
+        "sssssi",
         $data['url'],
         $data['agent_code'],
         $data['agent_token'],
         $data['agent_secret'],
+        $data['proxy'],
         $data['ativo']
     );
     return $qry->execute();
@@ -57,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'agent_code' => $_POST['agent_code_playfiver'],
             'agent_token' => $_POST['agent_token_playfiver'],
             'agent_secret' => $_POST['agent_secret_playfiver'],
+            'proxy' => $_POST['proxy_playfiver'] ?? '',
             'ativo' => intval($_POST['ativo_playfiver']),
         ];
 
@@ -148,6 +151,16 @@ $playfiver_config = get_playfiver_config();
                                                             <i class="fas fa-eye"></i>
                                                         </span>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="card mb-4">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Proxy Gratuito (IP Fixo da Webshare/Fixie) <small class="text-muted">(Opcional)</small></h5>
+                                                    <input type="text" name="proxy_playfiver" class="form-control" placeholder="ex: http://user:pass@p.webshare.io:9999" value="<?= htmlspecialchars($playfiver_config['proxy'] ?? '') ?>">
+                                                    <small class="form-text text-muted">Cole aqui seu proxy grátis para fixar o IP de saída da Vercel.</small>
                                                 </div>
                                             </div>
                                         </div>
