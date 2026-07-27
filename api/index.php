@@ -124,11 +124,17 @@ foreach ($slugRoutes as $pattern => $dest) {
     }
 }
 
-if (preg_match('#^/admin/([a-zA-Z0-9_-]+)$#', $uri, $m)) {
-    $file = '/admin/' . $m[1] . '.php';
-    if (file_exists($root . $file)) {
-        require $root . $file;
-        exit;
+if (strpos($uri, '/admin/') === 0) {
+    $relative_path = substr($uri, 7); // Strip '/admin/'
+    if (strpos($relative_path, '..') === false) {
+        $target_file = $root . '/admin/' . $relative_path;
+        if (!preg_match('#\.[a-zA-Z0-9]+$#', $relative_path)) {
+            $target_file .= '.php';
+        }
+        if (file_exists($target_file)) {
+            require $target_file;
+            exit;
+        }
     }
 }
 
