@@ -1142,14 +1142,18 @@ if ($path === '/api/frontend/trpc/registerReward.receive') {
     $user = getCurrentUser($mysqli);
     if (!$user) {
         sendTrpcResponse(["status" => false, "message" => "Login required"]); 
+        exit;
     }
     
-    $stmt = $mysqli->prepare("SELECT id FROM adicao_saldo WHERE id_user = ? AND tipo = 'register_reward'");
+    // CORRECTED: use get_result() + num_rows to properly check for existing record
+    $stmt = $mysqli->prepare("SELECT id FROM adicao_saldo WHERE id_user = ? AND tipo = 'register_reward' LIMIT 1");
     $stmt->bind_param("i", $user['id']);
     $stmt->execute();
-    if ($stmt->fetch()) {
+    $res = $stmt->get_result();
+    if ($res->num_rows > 0) {
         $stmt->close();
         sendTrpcResponse(["status" => false, "message" => "Already received"]);
+        exit;
     }
     $stmt->close();
 
@@ -1173,6 +1177,7 @@ if ($path === '/api/frontend/trpc/registerReward.receive') {
         "awardAmount" => $amount,
         "id" => $insertedId
     ]);
+    exit;
 }
 
 if ($path === '/api/frontend/trpc/registerReward.apply') {
@@ -1182,11 +1187,22 @@ if ($path === '/api/frontend/trpc/registerReward.apply') {
     if ($user) {
         $userId = $user['id'];
         
-        // Check if already applied
+        // Check if already applied — double-check against DB to prevent race conditions
         if (isset($user['canApplyRegisterReward']) && ($user['canApplyRegisterReward'] == 0 || $user['canApplyRegisterReward'] === false)) {
             sendTrpcResponse(["error" => "Already received"]);
             exit;
         }
+        // Additional DB check to catch race conditions or missing column
+        $stmtChk = $mysqli->prepare("SELECT id FROM adicao_saldo WHERE id_user = ? AND tipo = 'register_reward' LIMIT 1");
+        $stmtChk->bind_param("i", $user['id']);
+        $stmtChk->execute();
+        $resChk = $stmtChk->get_result();
+        if ($resChk->num_rows > 0) {
+            $stmtChk->close();
+            sendTrpcResponse(["error" => "Already received"]);
+            exit;
+        }
+        $stmtChk->close();
         
         // Carregar range de recompensa da Roleta Boas-Vindas
         $minRoulette = 30;
