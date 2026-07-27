@@ -3,7 +3,8 @@
   "functions": {
     "api/*.php": {
       "runtime": "vercel-php@0.7.4",
-      "maxDuration": 60
+      "maxDuration": 60,
+      "excludeFiles": "{uploads/**,igamewin/**,assets/**,images/**,img/**,imgs/**,svg/**,icons/**,gif/**,theme/**,themes/**,sw/**,versionControl/**,node_modules/**}"
     }
   },
   "routes": [
