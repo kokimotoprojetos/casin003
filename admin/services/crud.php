@@ -922,6 +922,9 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
         return [ 'gameURL' => null, 'error' => 'jogos em manutenção' ];
     }
     $provedor = strtoupper(trim($provedor));
+    if ($provedor === 'KKGAME' || $provedor === 'PG') {
+        $provedor = 'PGSOFT';
+    }
     $game = trim((string)$game);
     // Providers considerados originais na PlayFiver
     $providersOriginais = ['CQ9','JDB','FC','TD','SG','ACEWIN'];
@@ -932,8 +935,12 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
     $data = array(
         'method'        => 'game_launch',
         'agentToken'    => $keys['agent_token'],
+        'agent_token'   => $keys['agent_token'],
         'secretKey'     => $keys['agent_secret'],
+        'agent_secret'  => $keys['agent_secret'],
+        'agent_code'    => $keys['agent_code'],
         'user_code'     => $email,
+        'provider'      => $provedor,
         'provider_code' => $provedor,
         'game_code'     => $game,
         'game_original' => $isOriginal,

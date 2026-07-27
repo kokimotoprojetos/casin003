@@ -7925,7 +7925,7 @@ if ($path === '/api/frontend/trpc/game.login') {
                 $saldo = $user['saldo'];
                 $email = $user['mobile']; 
                 $gameLaunch = [];
-                if ($apiNormalized === 'pgclone' || ($apiNormalized === 'playfiver' && in_array($providerKey, ['PG', 'PGSOFT', 'KKGAME'], true))) {
+                if ($apiNormalized === 'pgclone') {
                      $gameLaunch = pegarLinkJogoPGClone($provider, $gameCode, $email, $saldo);
                 } elseif ($apiNormalized === 'ppclone') {
                      $gameLaunch = pegarLinkJogoPPClone($provider, $gameCode, $email, $saldo);
