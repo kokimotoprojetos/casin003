@@ -344,11 +344,7 @@ function buildLogoFlag($providerName, $gameName) {
     return $providerName . "_" . $value;
 }
 function getLocalLogoUrl($url, $platformCode, $gameCode) {
-    if (strpos($url, 'maxapigames.com') !== false) {
-        $safeCode = str_replace(' ', '_', $platformCode);
-        $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'png';
-        return "/uploads/game-logos/{$safeCode}_{$gameCode}.{$ext}";
-    }
+    // Return URL as-is — external URLs (imagensfivers.com, maxapigames.com etc.) are served directly
     return $url;
 }
 function formatGameData($row, $baseUrl) {
