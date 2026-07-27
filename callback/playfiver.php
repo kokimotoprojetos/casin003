@@ -27,9 +27,16 @@ function writeLog($message) {
     }
 }
 
+$last_error_msg = null;
+
 function sendErrorResponse($httpCode, $message) {
+    global $last_error_msg;
     http_response_code($httpCode);
-    echo json_encode(['msg' => $message]);
+    $response = ['msg' => $message];
+    if ($last_error_msg !== null) {
+        $response['debug_error'] = $last_error_msg;
+    }
+    echo json_encode($response);
     exit;
 }
 
@@ -253,12 +260,16 @@ function handleTransaction($request) {
             
         } catch (Exception $e) {
             $mysqli->rollback();
+            global $last_error_msg;
+            $last_error_msg = "ERRO TRANSAÇÃO EXEC: " . $e->getMessage() . " em " . $e->getFile() . ":" . $e->getLine();
             writeLog("ERRO TRANSAÇÃO EXEC: " . $e->getMessage());
             sendErrorResponse(500, 'Erro interno no servidor');
         } finally {
             $mysqli->autocommit(true);
         }
     } catch (Throwable $t) {
+        global $last_error_msg;
+        $last_error_msg = "ERRO GERAL TRANSAÇÃO: " . $t->getMessage() . " em " . $t->getFile() . ":" . $t->getLine();
         writeLog("ERRO GERAL TRANSAÇÃO: " . $t->getMessage() . " em " . $t->getFile() . ":" . $t->getLine());
         sendErrorResponse(500, 'Erro interno no servidor');
     }
