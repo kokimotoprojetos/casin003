@@ -1,5 +1,11 @@
 <?php
 error_log("api/index.php invoked: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
+if (parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/api/get-ip') {
+    header('Content-Type: application/json');
+    $ip = @file_get_contents('https://api.ipify.org');
+    echo json_encode(['ip' => $ip, 'message' => 'Copie este IP e adicione no Controle de IPs da PlayFiver']);
+    exit;
+}
 chdir(__DIR__ . '/..');
 set_error_handler(function ($severity, $message, $file, $line) {
     error_log("PHP Error [$severity] $message in $file:$line");
