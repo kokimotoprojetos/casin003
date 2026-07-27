@@ -128,130 +128,139 @@ function handleTransaction($request) {
     
     writeLog("=== TRANSACTION REQUEST ===");
     
-    $type = trim($request['type'] ?? '');
-    $userCode = trim($request['user_code'] ?? '');
-    $userBalance = floatval($request['user_balance'] ?? 0);
-    $gameType = trim($request['game_type'] ?? 'slot');
-    $gameOriginal = $request['game_original'] ?? true;
-    
-    $slotData = $request[$gameType] ?? [];
-    $gameCode = trim($slotData['game_code'] ?? '');
-    $bet = floatval($slotData['bet'] ?? 0);
-    $win = floatval($slotData['win'] ?? 0);
-    $txnId = trim($slotData['txn_id'] ?? '');
-    $userAfterBalance = floatval($slotData['user_after_balance'] ?? $userBalance);
-    
-    writeLog("Type: $type | User: $userCode | Game: $gameCode | Bet: $bet | Win: $win | TxnID: $txnId | AfterBalance: $userAfterBalance");
-    
-    if (empty($userCode) || empty($txnId)) {
-        writeLog("CAMPOS FALTANDO");
-        sendErrorResponse(400, 'Campos obrigatórios faltando');
-    }
-    
-    // Buscar usuário
-    $query = "SELECT id, saldo, invitation_code FROM usuarios WHERE mobile = ?";
-    $stmt = $mysqli->prepare($query);
-    
-    if (!$stmt) {
-        writeLog("ERRO SQL: " . $mysqli->error);
-        sendErrorResponse(500, 'Erro interno');
-    }
-    
-    $stmt->bind_param("s", $userCode);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows === 0) {
-        writeLog("USUÁRIO NÃO ENCONTRADO: $userCode");
-        $stmt->close();
-        sendErrorResponse(404, 'Usuário não encontrado');
-    }
-    
-    $userData = $result->fetch_assoc();
-    $stmt->close();
-    
-    $userId = $userData['id'];
-    $currentBalance = floatval($userData['saldo']);
-    $invitationCode = $userData['invitation_code'] ?? '';
-    
-    writeLog("ID: $userId | Saldo Atual: $currentBalance");
-    
-    // Verificar duplicata
-    $queryDup = "SELECT id FROM historico_play WHERE txn_id = ? LIMIT 1";
-    $stmtDup = $mysqli->prepare($queryDup);
-    $stmtDup->bind_param("s", $txnId);
-    $stmtDup->execute();
-    $stmtDup->store_result();
-    
-    if ($stmtDup->num_rows > 0) {
-        writeLog("TRANSAÇÃO DUPLICADA: $txnId");
-        $stmtDup->close();
-        sendSuccessResponse(['msg' => '', 'balance' => $currentBalance]);
-    }
-    $stmtDup->close();
-    
-    $newBalance = $userAfterBalance;
-    
-    if ($newBalance < 0) {
-        writeLog("SALDO INSUFICIENTE");
-        sendErrorResponse(400, 'Saldo insuficiente');
-    }
-    
-    // Transação
-    $mysqli->autocommit(false);
-    
     try {
-        // Inserir histórico
-        $queryInsert = "INSERT INTO historico_play (id_user, nome_game, bet_money, win_money, txn_id, created_at, status_play) 
-                        VALUES (?, ?, ?, ?, ?, NOW(), 1)";
-        $stmtInsert = $mysqli->prepare($queryInsert);
+        $type = trim($request['type'] ?? '');
+        $userCode = trim($request['user_code'] ?? '');
+        $userBalance = floatval($request['user_balance'] ?? 0);
+        $gameType = trim($request['game_type'] ?? 'slot');
+        $gameOriginal = $request['game_original'] ?? true;
         
-        if (!$stmtInsert) {
-            throw new Exception("Erro prepare insert: " . $mysqli->error);
+        $slotData = $request[$gameType] ?? [];
+        $gameCode = trim($slotData['game_code'] ?? '');
+        $bet = floatval($slotData['bet'] ?? 0);
+        $win = floatval($slotData['win'] ?? 0);
+        $txnId = trim($slotData['txn_id'] ?? '');
+        $userAfterBalance = floatval($slotData['user_after_balance'] ?? $userBalance);
+        
+        writeLog("Type: $type | User: $userCode | Game: $gameCode | Bet: $bet | Win: $win | TxnID: $txnId | AfterBalance: $userAfterBalance");
+        
+        if (empty($userCode) || empty($txnId)) {
+            writeLog("CAMPOS FALTANDO");
+            sendErrorResponse(400, 'Campos obrigatórios faltando');
         }
         
-        $stmtInsert->bind_param("isdds", $userId, $gameCode, $bet, $win, $txnId);
+        // Buscar usuário
+        $query = "SELECT id, saldo, invitation_code FROM usuarios WHERE mobile = ?";
+        $stmt = $mysqli->prepare($query);
         
-        if (!$stmtInsert->execute()) {
-            throw new Exception("Erro insert: " . $stmtInsert->error);
-        }
-        $stmtInsert->close();
-        
-        writeLog("HISTÓRICO INSERIDO");
-        
-        // Atualizar saldo
-        $queryUpdate = "UPDATE usuarios SET saldo = ? WHERE id = ?";
-        $stmtUpdate = $mysqli->prepare($queryUpdate);
-        
-        if (!$stmtUpdate) {
-            throw new Exception("Erro prepare update: " . $mysqli->error);
+        if (!$stmt) {
+            writeLog("ERRO SQL PREPARE USER: " . $mysqli->error);
+            sendErrorResponse(500, 'Erro interno');
         }
         
-        $stmtUpdate->bind_param("di", $newBalance, $userId);
+        $stmt->bind_param("s", $userCode);
+        $stmt->execute();
+        $result = $stmt->get_result();
         
-        if (!$stmtUpdate->execute()) {
-            throw new Exception("Erro update: " . $stmtUpdate->error);
-        }
-        $stmtUpdate->close();
-        
-        writeLog("SALDO ATUALIZADO: $newBalance");
-        
-        // Comissão afiliado
-        if (!empty($invitationCode) && $gameOriginal) {
-            processAffiliateCommission($invitationCode, $bet, $win);
+        if ($result->num_rows === 0) {
+            writeLog("USUÁRIO NÃO ENCONTRADO: $userCode");
+            $stmt->close();
+            sendErrorResponse(404, 'Usuário não encontrado');
         }
         
-        $mysqli->commit();
-        writeLog("TRANSAÇÃO CONCLUÍDA COM SUCESSO");
+        $userData = $result->fetch_assoc();
+        $stmt->close();
         
-        return ['msg' => '', 'balance' => floatval($newBalance)];
+        $userId = $userData['id'];
+        $currentBalance = floatval($userData['saldo']);
+        $invitationCode = $userData['invitation_code'] ?? '';
         
-    } catch (Exception $e) {
-        $mysqli->rollback();
-        writeLog("ERRO TRANSAÇÃO: " . $e->getMessage());
+        writeLog("ID: $userId | Saldo Atual: $currentBalance");
+        
+        // Verificar duplicata
+        $queryDup = "SELECT id FROM historico_play WHERE txn_id = ? LIMIT 1";
+        $stmtDup = $mysqli->prepare($queryDup);
+        if (!$stmtDup) {
+            writeLog("ERRO SQL PREPARE DUP: " . $mysqli->error);
+            sendErrorResponse(500, 'Erro interno');
+        }
+        $stmtDup->bind_param("s", $txnId);
+        $stmtDup->execute();
+        $stmtDup->store_result();
+        
+        if ($stmtDup->num_rows > 0) {
+            writeLog("TRANSAÇÃO DUPLICADA: $txnId");
+            $stmtDup->close();
+            sendSuccessResponse(['msg' => '', 'balance' => $currentBalance]);
+        }
+        $stmtDup->close();
+        
+        $newBalance = $userAfterBalance;
+        
+        if ($newBalance < 0) {
+            writeLog("SALDO INSUFICIENTE");
+            sendErrorResponse(400, 'Saldo insuficiente');
+        }
+        
+        // Transação
+        $mysqli->autocommit(false);
+        
+        try {
+            // Inserir histórico
+            $queryInsert = "INSERT INTO historico_play (id_user, nome_game, bet_money, win_money, txn_id, created_at, status_play) 
+                            VALUES (?, ?, ?, ?, ?, NOW(), 1)";
+            $stmtInsert = $mysqli->prepare($queryInsert);
+            
+            if (!$stmtInsert) {
+                throw new Exception("Erro prepare insert: " . $mysqli->error);
+            }
+            
+            $stmtInsert->bind_param("isdds", $userId, $gameCode, $bet, $win, $txnId);
+            
+            if (!$stmtInsert->execute()) {
+                throw new Exception("Erro insert: " . $stmtInsert->error);
+            }
+            $stmtInsert->close();
+            
+            writeLog("HISTÓRICO INSERIDO");
+            
+            // Atualizar saldo
+            $queryUpdate = "UPDATE usuarios SET saldo = ? WHERE id = ?";
+            $stmtUpdate = $mysqli->prepare($queryUpdate);
+            
+            if (!$stmtUpdate) {
+                throw new Exception("Erro prepare update: " . $mysqli->error);
+            }
+            
+            $stmtUpdate->bind_param("di", $newBalance, $userId);
+            
+            if (!$stmtUpdate->execute()) {
+                throw new Exception("Erro update: " . $stmtUpdate->error);
+            }
+            $stmtUpdate->close();
+            
+            writeLog("SALDO ATUALIZADO: $newBalance");
+            
+            // Comissão afiliado
+            if (!empty($invitationCode) && $gameOriginal) {
+                processAffiliateCommission($invitationCode, $bet, $win);
+            }
+            
+            $mysqli->commit();
+            writeLog("TRANSAÇÃO CONCLUÍDA COM SUCESSO");
+            
+            return ['msg' => '', 'balance' => floatval($newBalance)];
+            
+        } catch (Exception $e) {
+            $mysqli->rollback();
+            writeLog("ERRO TRANSAÇÃO EXEC: " . $e->getMessage());
+            sendErrorResponse(500, 'Erro interno no servidor');
+        } finally {
+            $mysqli->autocommit(true);
+        }
+    } catch (Throwable $t) {
+        writeLog("ERRO GERAL TRANSAÇÃO: " . $t->getMessage() . " em " . $t->getFile() . ":" . $t->getLine());
         sendErrorResponse(500, 'Erro interno no servidor');
-    } finally {
-        $mysqli->autocommit(true);
     }
 }
 
