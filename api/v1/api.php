@@ -2175,16 +2175,30 @@ if ($path === '/api/frontend/trpc/vip.receive') {
 
 if ($path === '/api/frontend/trpc/registerReward.get') {
     $rotaEncontrada = true;
+    $user = getCurrentUser($mysqli);
+    $registerRewardId = null;
+    $registerRewardAmount = null;
+    $registerRewardReceiveTime = null;
+    if ($user) {
+        $stmt = $mysqli->prepare("SELECT id, valor, data_registro FROM adicao_saldo WHERE id_user = ? AND tipo = 'register_reward' LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("i", $user['id']);
+            $stmt->execute();
+            $stmt->bind_result($rId, $rVal, $rDate);
+            if ($stmt->fetch()) {
+                $registerRewardId = (int)$rId;
+                $registerRewardAmount = (float)$rVal;
+                $registerRewardReceiveTime = $rDate;
+            }
+            $stmt->close();
+        }
+    }
     $response = [
-        "awardAmount" => 2000,
+        "awardAmount" => $registerRewardAmount ?? 0,
         "isOpenDouble" => false,
-        "registerRewardId" => 1
+        "registerRewardId" => $registerRewardId ?? 0
     ];
     sendTrpcResponse($response);
-}
-if ($path === '/api/frontend/trpc/registerReward.receive') {
-    $rotaEncontrada = true;
-    sendTrpcResponse(['status' => 'SUCCESS']);
 }
 if ($path === '/api/frontend/trpc/activity.list' || $path === '/api/frontend/trpc/activity.listPublic') {
     $rotaEncontrada = true;
@@ -5844,6 +5858,21 @@ if ($path === '/api/frontend/trpc/banner.quickEntryListPublic') {
 }
 if ($path === '/api/frontend/trpc/activity.receiveSignIn') {
     $rotaEncontrada = true;
+    $user = getCurrentUser($mysqli);
+    if (!$user) {
+        sendTrpcResponse(["status" => false, "message" => "Login required"]);
+        exit;
+    }
+    $today = date('Y-m-d');
+    $checkStmt = $mysqli->prepare("SELECT id FROM signin_records WHERE user_id = ? AND date_record = ?");
+    $checkStmt->bind_param("is", $user['id'], $today);
+    $checkStmt->execute();
+    if ($checkStmt->get_result()->num_rows > 0) {
+        $checkStmt->close();
+        sendTrpcResponse(["status" => false, "message" => "Already signed in today"]);
+        exit;
+    }
+    $checkStmt->close();
     sendTrpcResponse(["status" => true, "message" => "Sign in successful"]);
 }
 if ($path === '/api/frontend/trpc/tenant.footerText') {

@@ -7774,7 +7774,8 @@ const Bt = Ea({
             this.activityList
         },
         async setRechargeBonusPopupStatus(t) {
-            await Ya.set("RECHARGE_BONUS_POPUP_STATUS", t),
+            var d = new Date().toISOString().slice(0,10);
+            await Ya.set("RECHARGE_BONUS_POPUP_STATUS", t ? JSON.stringify({s:t, d:d}) : t),
             this.rechargeBonusPopupStatus = t
         },
         async getUserHomeTop(t) {
@@ -33023,6 +33024,7 @@ const MK = {
       , s = await $e().getToken()
       , o = await t.getCompulsoryInstallTime("rechargeBonus")
       , l = ru("RechargeBonus");
+    try{var _y=await Ya.get("RECHARGE_BONUS_POPUP_STATUS");if(_y&&!a.rechargeBonusPopupStatus){var _p=JSON.parse(_y);_p&&_p.d===new Date().toISOString().slice(0,10)&&_p.s&&(a.rechargeBonusPopupStatus=_p.s)}}catch(e){}
     return [...new Map([["isNotLogin", () => !s], ["isTodayInvisible", () => o > Date.now()], ["isInvalidActivity", () => Tn(l) || !(l != null && l.homeTop && (l != null && l.id))], ["isAlreadyShow", () => a.rechargeBonusPopupStatus !== 0]]).values()].some(u => u())
 }
   , yw = async t => {
@@ -47454,8 +47456,7 @@ function _u() {
     ),
     Xe( () => w.value.path, async (Ae, ye) => {
         if (Ae == "/main/inicio" && ye !== "/main/inicio" && !Pi()) {
-            if (f.rechargeBonusPopupStatus = 0,
-            f.announcementPopupStatus = 0,
+            if (f.announcementPopupStatus = 0,
             await kie())
                 return;
             ii().updateTaskList("NewbieTask").then( () => {
