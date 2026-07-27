@@ -73,6 +73,10 @@
       "check": true
     },
     {
+      "src": "^/api/get-ip$",
+      "dest": "/api/index.php?get-ip=1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/index.php"
     }

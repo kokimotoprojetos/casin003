@@ -1,6 +1,6 @@
 <?php
 error_log("api/index.php invoked: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
-if (parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/api/get-ip') {
+if (strpos($_SERVER['REQUEST_URI'] ?? '', 'get-ip') !== false || isset($_GET['get-ip'])) {
     header('Content-Type: application/json');
     $ip = @file_get_contents('https://api.ipify.org');
     echo json_encode(['ip' => $ip, 'message' => 'Copie este IP e adicione no Controle de IPs da PlayFiver']);
