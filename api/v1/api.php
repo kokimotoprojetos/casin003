@@ -4914,7 +4914,7 @@ if ($path === '/api/frontend/trpc/home.platformList') {
             }
             $ph = implode(',', array_fill(0, count($aliases), '?'));
             $types = str_repeat('s', count($aliases));
-            $stmtCount = $mysqli->prepare("SELECT COUNT(*) as count FROM games WHERE UPPER(provider) IN ($ph)");
+            $stmtCount = $mysqli->prepare("SELECT COUNT(*) as count FROM games WHERE status=1 AND UPPER(provider) IN ($ph)");
             if ($stmtCount) {
                 $stmtCount->bind_param($types, ...$aliases);
                 $stmtCount->execute();
@@ -4964,7 +4964,7 @@ if ($path === '/api/frontend/trpc/home.list') {
             }
             $ph = implode(',', array_fill(0, count($aliases), '?'));
             $types = str_repeat('s', count($aliases));
-            $stmtCount = $mysqli->prepare("SELECT COUNT(*) as count FROM games WHERE UPPER(provider) IN ($ph)");
+            $stmtCount = $mysqli->prepare("SELECT COUNT(*) as count FROM games WHERE status=1 AND UPPER(provider) IN ($ph)");
             if ($stmtCount) {
                 $stmtCount->bind_param($types, ...$aliases);
                 $stmtCount->execute();
