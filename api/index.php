@@ -6,6 +6,15 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', 'get-ip') !== false || isset($_GET['ge
     echo json_encode(['ip' => $ip, 'message' => 'Copie este IP e adicione no Controle de IPs da PlayFiver']);
     exit;
 }
+if (strpos($_SERVER['REQUEST_URI'] ?? '', 'test-launch') !== false || isset($_GET['test-launch'])) {
+    header('Content-Type: application/json');
+    require_once __DIR__ . '/../config.php';
+    require_once __DIR__ . '/../admin/services/database.php';
+    require_once __DIR__ . '/../admin/services/crud.php';
+    $res = pegarLinkJogoApiPlayFiver('PGSOFT', 'fortune-tiger', 'testekoki@email.com', 100);
+    echo json_encode(['result' => $res]);
+    exit;
+}
 chdir(__DIR__ . '/..');
 set_error_handler(function ($severity, $message, $file, $line) {
     error_log("PHP Error [$severity] $message in $file:$line");

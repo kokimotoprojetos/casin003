@@ -77,6 +77,10 @@
       "dest": "/api/index.php?get-ip=1"
     },
     {
+      "src": "^/api/test-launch$",
+      "dest": "/api/index.php?test-launch=1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
