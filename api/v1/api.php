@@ -184,7 +184,14 @@ if (strpos($path, '/api/frontend/game-logo/') === 0) {
     }
     if ($bannerUrl) {
         header('Cache-Control: public, max-age=86400, immutable');
-        header('Location: ' . $bannerUrl, true, 302);
+        if (strpos($bannerUrl, 'maxapigames.com') !== false) {
+            $ext = pathinfo(parse_url($bannerUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'png';
+            $safeProv = str_replace(' ', '_', $rawProv);
+            $localUrl = "/uploads/game-logos/{$safeProv}_{$rawGameKey}.{$ext}";
+            header('Location: ' . $localUrl, true, 302);
+        } else {
+            header('Location: ' . $bannerUrl, true, 302);
+        }
         exit;
     }
     header('Content-Type: application/json; charset=utf-8');
