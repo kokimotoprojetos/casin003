@@ -25,7 +25,6 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uri, '/') ?: '/';
 
 $cleanRoutes = [
-    '/download-logos'             => '/api/download_logos.php',
     '/health'                     => '/api/health.php',
 
     '/admin'                      => '/admin/index.php',

@@ -48,6 +48,17 @@ if (strpos($path, '/api/frontend/game-logo/') === 0) {
     }
     $file = urldecode($file);
     $name = preg_replace('/\\.(jpg|jpeg|png|webp)$/i', '', $file);
+    $safeName = str_replace(' ', '_', $name);
+    $extensions = ['png', 'jpg'];
+    $localDir = __DIR__ . '/../../uploads/game-logos';
+    foreach ($extensions as $ext) {
+        $localFsPath = "$localDir/$safeName.$ext";
+        if (file_exists($localFsPath)) {
+            header('Cache-Control: public, max-age=86400, immutable');
+            header("Location: /uploads/game-logos/$safeName.$ext", true, 302);
+            exit;
+        }
+    }
     $prov = '';
     $gameKey = '';
     $pos = strpos($name, '_');
@@ -334,6 +345,14 @@ function buildLogoFlag($providerName, $gameName) {
     $value = preg_replace('/[^a-zA-Z0-9]/', '', $value);
     return $providerName . "_" . $value;
 }
+function getLocalLogoUrl($url, $platformCode, $gameCode) {
+    if (strpos($url, 'maxapigames.com') !== false) {
+        $safeCode = str_replace(' ', '_', $platformCode);
+        $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'png';
+        return "/uploads/game-logos/{$safeCode}_{$gameCode}.{$ext}";
+    }
+    return $url;
+}
 function formatGameData($row, $baseUrl) {
     $providerConfig = getProviderConfig($row['provider']);
     $cleanName = trim(str_replace(["\r", "\n"], '', $row['game_name']));
@@ -355,6 +374,7 @@ function formatGameData($row, $baseUrl) {
         $banner = $baseUrl . $banner;
     }
     $platformCode = $providerConfig['code'];
+    $banner = getLocalLogoUrl($banner, $platformCode, $row['game_code']);
     return [
         "status" => ($row['status'] == 1) ? "ON" : "OFF",
         "hot" => (bool)$row['popular'],
@@ -406,6 +426,7 @@ function formatHotGameData($row, $baseUrl) {
         $banner = $baseUrl . $banner;
     }
     $platformCode = $providerConfig['code'];
+    $banner = getLocalLogoUrl($banner, $platformCode, $row['game_code']);
     return [
         "background" => "",
         "gameCode" => $row['game_code'],
