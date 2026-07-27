@@ -1,9 +1,9 @@
 <?php
 session_set_cookie_params(60 * 60 * 24 * 5); // 5 dias em segundos
 session_start();
-include_once('../logs/registrar_logs.php');
-include_once('../services/database.php');
-include_once('../services/funcao.php');
+include_once(__DIR__ . '/../logs/registrar_logs.php');
+include_once(__DIR__ . '/../services/database.php');
+include_once(__DIR__ . '/../services/funcao.php');
 
 function exibirAlerta($tipo, $titulo, $mensagem) {
     echo "<div class='alert alert-$tipo alert-dismissible fade show border-start border-2 border-$tipo mb-0' role='alert'>
