@@ -49,16 +49,6 @@ if (strpos($path, '/api/frontend/game-logo/') === 0) {
     $file = urldecode($file);
     $name = preg_replace('/\\.(jpg|jpeg|png|webp)$/i', '', $file);
     $safeName = str_replace(' ', '_', $name);
-    $extensions = ['png', 'jpg'];
-    $localDir = __DIR__ . '/../../uploads/game-logos';
-    foreach ($extensions as $ext) {
-        $localFsPath = "$localDir/$safeName.$ext";
-        if (file_exists($localFsPath)) {
-            header('Cache-Control: public, max-age=86400, immutable');
-            header("Location: /uploads/game-logos/$safeName.$ext", true, 302);
-            exit;
-        }
-    }
     $prov = '';
     $gameKey = '';
     $pos = strpos($name, '_');
@@ -68,6 +58,7 @@ if (strpos($path, '/api/frontend/game-logo/') === 0) {
     } else {
         $gameKey = $name;
     }
+    $rawGameKey = $gameKey;
     $normalizeKey = function($value) {
         $value = str_replace(["\r", "\n"], '', (string)$value);
         $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
@@ -193,7 +184,14 @@ if (strpos($path, '/api/frontend/game-logo/') === 0) {
     }
     if ($bannerUrl) {
         header('Cache-Control: public, max-age=86400, immutable');
-        header('Location: ' . $bannerUrl, true, 302);
+        if (strpos($bannerUrl, 'maxapigames.com') !== false) {
+            $ext = pathinfo(parse_url($bannerUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'png';
+            $safeProv = str_replace(' ', '_', $prov);
+            $localUrl = "/uploads/game-logos/{$safeProv}_{$rawGameKey}.{$ext}";
+            header('Location: ' . $localUrl, true, 302);
+        } else {
+            header('Location: ' . $bannerUrl, true, 302);
+        }
         exit;
     }
     header('Content-Type: application/json; charset=utf-8');
