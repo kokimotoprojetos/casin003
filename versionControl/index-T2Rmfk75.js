@@ -33033,7 +33033,7 @@ const MK = {
       , s = nn().isInGame
       , o = ((u = (d = Oe.currentRoute) == null ? void 0 : d.value) == null ? void 0 : u.path) === hw
       , l = Bt();
-    return a || s || !o ? !1 : (l.rechargeBonusPopupStatus = 1,
+    return a || s || !o ? !1 : (await l.setRechargeBonusPopupStatus(1),
     mc("rechargeBonus"),
     !0)
 }
@@ -125372,11 +125372,11 @@ const l8t = z({
       , M = () => {
         T.value = !T.value
     }
-      , L = (U={
+      , L = async (U={
         type: "dismiss"
     }, j=!0) => {
         const F = (U == null ? void 0 : U.type) === "close" ? 2 : 1;
-        F === 2 && (Bt().rechargeBonusPopupStatus = 1),
+        F === 2 && await Bt().setRechargeBonusPopupStatus(1),
         j && T.value && s.setForceModalTime("rechargeBonus", x()),
         Jo(!1, {
             type: F
