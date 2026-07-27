@@ -4928,7 +4928,7 @@ if ($path === '/api/frontend/trpc/banner.list') {
 if ($path === '/api/frontend/trpc/home.platformList') {
     $rotaEncontrada = true;
     $platformList = [];
-    $includeCodes = ["KKGAME", "PP", "slot-jili", "ONE_API_JDB", "wg", "Askme Slots", "CPGames", "SSR", "RedTiger", "SPRIBE", "Evoplay", "ONE_API_Tada", "ONE_API_FaChai", "POPOK", "PLAYSON"];
+    $includeCodes = ["KKGAME", "PP", "slot-evoplay", "PLAYSON", "HABANERO", "PLAYNGO", "RUBYPLAY"];
     $codesList = implode("','", array_map("addslashes", $includeCodes));
     $res = $mysqli->query("SELECT * FROM provedores WHERE status = 1 AND code IN ('".$codesList."') ORDER BY id ASC");
     if ($res) {
