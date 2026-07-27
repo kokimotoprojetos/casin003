@@ -981,7 +981,7 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
     global $data_playfiver;
     $keys = $data_playfiver;
     if (!$keys || empty(trim($keys['url'] ?? '')) || empty(trim($keys['agent_token'] ?? '')) || empty(trim($keys['agent_secret'] ?? '')) || empty(trim($keys['agent_code'] ?? ''))) {
-        return [ 'gameURL' => null, 'error' => 'jogos em manutenção' ];
+        return [ 'gameURL' => null, 'error' => 'Credenciais da PlayFiver não configuradas' ];
     }
     $provedor = strtoupper(trim($provedor));
     if ($provedor === 'KKGAME' || $provedor === 'PG') {
@@ -1092,10 +1092,12 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
             if ($game_url) {
                 $games = array('gameURL' => $game_url);
             } else {
-                $games = array('gameURL' => null, 'error' => 'jogos em manutenção');
+                $msgErro = $fallbackData['msg'] ?? $data_response['msg'] ?? 'URL do jogo não encontrada na resposta';
+                $games = array('gameURL' => null, 'error' => $msgErro);
             }
         } else {
-            $games = array('gameURL' => null, 'error' => 'jogos em manutenção');
+            $msgErro = $fallbackData['msg'] ?? $data_response['msg'] ?? 'Erro no servidor PlayFiver: ' . ($response ?: 'Falha na conexão cURL');
+            $games = array('gameURL' => null, 'error' => $msgErro);
         }
     }
     
