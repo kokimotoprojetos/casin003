@@ -47482,9 +47482,7 @@ function _u() {
     ),
     Xe( () => w.value.path, async (Ae, ye) => {
         if (Ae == "/main/inicio" && ye !== "/main/inicio" && !Pi()) {
-            if (f.rechargeBonusPopupStatus = 0,
-            f.announcementPopupStatus = 0,
-            await kie())
+            if (await kie())
                 return;
             ii().updateTaskList("NewbieTask").then( () => {
                 Ooe()

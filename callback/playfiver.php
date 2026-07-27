@@ -9,7 +9,7 @@ include_once "../" . DASH . "/services/database.php";
 include_once "../" . DASH . "/services/funcao.php";
 include_once "../" . DASH . "/services/crud.php";
 
-const ENABLE_LOGS = false;
+const ENABLE_LOGS = true;
 const LOG_FILE = __DIR__ . '/playfiver_webhook.log';
 
 function writeLog($message) {

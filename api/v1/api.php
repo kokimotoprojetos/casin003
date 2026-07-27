@@ -3206,11 +3206,21 @@ if ($path === '/api/frontend/trpc/reward.list') {
         $stmtCheck->close();
         
         if ($alreadyClaimed) {
-            // Usuário já resgatou hoje - retornar array vazio (sem recompensa)
             $response = [];
         } else {
-            // Usuário pode resgatar - gerar orderNo único
-            $timestamp = round(microtime(true) * 1000); // timestamp em milissegundos
+            $rewardCooldownKey = 'reward_offered_' . $userId;
+            $lastOffered = isset($_SESSION) && isset($_SESSION[$rewardCooldownKey]) ? $_SESSION[$rewardCooldownKey] : 0;
+            if (time() - $lastOffered < 3600) {
+                $response = [];
+                sendTrpcResponse($response);
+                return;
+            }
+            if (session_status() === PHP_SESSION_NONE) {
+                @session_start();
+            }
+            $_SESSION[$rewardCooldownKey] = time();
+            
+            $timestamp = round(microtime(true) * 1000);
             // orderNo carrega amount (centavos) e doubleMultiplier (centésimos) para consistência no receive
             $batchNo = "AutoReward" . $timestamp;
             $cfg = $redEnvelopeGet();
@@ -4787,7 +4797,7 @@ if ($path === '/api/frontend/trpc/activity.config') {
 if ($path === '/api/frontend/trpc/home.hot') {
     $rotaEncontrada = true;
     $hotList = [];
-    $stmt = $mysqli->prepare("SELECT * FROM games WHERE popular = 1 AND status = 1 LIMIT 20");
+    $stmt = $mysqli->prepare("SELECT * FROM games WHERE popular = 1 AND status = 1 ORDER BY RAND() LIMIT 50");
     $stmt->execute();
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
