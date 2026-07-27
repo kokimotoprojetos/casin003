@@ -13,11 +13,16 @@ const ENABLE_LOGS = true;
 const LOG_FILE = __DIR__ . '/playfiver_webhook.log';
 
 function writeLog($message) {
-    if (!ENABLE_LOGS) return;
-    
-    $timestamp = date('Y-m-d H:i:s');
-    $logEntry = "[$timestamp] $message" . PHP_EOL;
-    file_put_contents(LOG_FILE, $logEntry, FILE_APPEND);
+    global $mysqli;
+    error_log("[PlayFiver Callback] " . $message);
+    if (isset($mysqli) && $mysqli instanceof mysqli) {
+        $stmt = $mysqli->prepare("INSERT INTO temp_callback_logs (message) VALUES (?)");
+        if ($stmt) {
+            $stmt->bind_param("s", $message);
+            $stmt->execute();
+            $stmt->close();
+        }
+    }
 }
 
 function sendErrorResponse($httpCode, $message) {
