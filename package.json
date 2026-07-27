@@ -1,6 +1,6 @@
 {
   "dependencies": {
     "puppeteer": "^24.37.3",
-    "vercel-php": "^0.7.1"
+    "vercel-php": "^0.9.0"
   }
 }
