@@ -187,56 +187,25 @@ function get_active_gateway($mysqli)
 $toastType = null;
 $toastMessage = '';
 
-// Validação de 2FA para desbloquear credenciais
-$credenciais_desbloqueadas = false;
-if (isset($_POST['validar_2fa_visualizar'])) {
-    if (validar_2fa_admin($_POST['codigo_2fa_visualizar'])) {
-        $credenciais_desbloqueadas = true;
-        $_SESSION['credenciais_desbloqueadas'] = true;
-        $_SESSION['credenciais_timeout'] = time() + 300;
-        $toastType = 'success';
-        $toastMessage = admin_t('gateway_toast_unlocked');
-    } else {
-        $toastType = 'error';
-        $toastMessage = admin_t('twofa_error');
-    }
-}
-
-// Verificar se credenciais ainda estão desbloqueadas
-if (isset($_SESSION['credenciais_desbloqueadas']) && isset($_SESSION['credenciais_timeout'])) {
-    if (time() < $_SESSION['credenciais_timeout']) {
-        $credenciais_desbloqueadas = true;
-    } else {
-        unset($_SESSION['credenciais_desbloqueadas']);
-        unset($_SESSION['credenciais_timeout']);
-    }
-}
+// Validação de 2FA desativada a pedido do usuário: credenciais sempre desbloqueadas
+$credenciais_desbloqueadas = true;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['gateway'])) {
-    // Validar 2FA antes de atualizar credenciais
-    if (!isset($_POST['codigo_2fa_salvar']) || empty($_POST['codigo_2fa_salvar'])) {
-        $toastType = 'error';
-        $toastMessage = admin_t('gateway_toast_code_required_to_save');
-    } elseif (!validar_2fa_admin($_POST['codigo_2fa_salvar'])) {
-        $toastType = 'error';
-        $toastMessage = admin_t('twofa_error');
+    $data = [
+        'gateway' => $_POST['gateway'],
+        'client_id' => $_POST['client_id'],
+        'client_secret' => $_POST['client_secret'],
+        'url' => isset($_POST['url']) ? $_POST['url'] : ''
+    ];
+
+    $update_success = update_config($data);
+
+    if ($update_success) {
+        $toastType = 'success';
+        $toastMessage = admin_t('toast_config_updated');
     } else {
-        $data = [
-            'gateway' => $_POST['gateway'],
-            'client_id' => $_POST['client_id'],
-            'client_secret' => $_POST['client_secret'],
-            'url' => isset($_POST['url']) ? $_POST['url'] : ''
-        ];
-
-        $update_success = update_config($data);
-
-        if ($update_success) {
-            $toastType = 'success';
-            $toastMessage = admin_t('toast_config_updated');
-        } else {
-            $toastType = 'error';
-            $toastMessage = admin_t('toast_config_error');
-        }
+        $toastType = 'error';
+        $toastMessage = admin_t('toast_config_error');
     }
 }
 
@@ -760,46 +729,23 @@ $activeGateway = get_active_gateway($mysqli);
     <script src="assets/js/app.js"></script>
 
     <script>
-        let gatewayAtual = '';
-
         function abrirModal2FASalvar(gateway) {
-            gatewayAtual = gateway;
-            document.getElementById('gatewayNome').textContent = gateway;
-            const modal = new bootstrap.Modal(document.getElementById('modal2FASalvar'));
-            modal.show();
-        }
-
-        function confirmarSalvar() {
-            const codigo2fa = document.getElementById('codigo_2fa_salvar').value;
-
-            if (!codigo2fa) {
-                showToast('error', '<?= admin_t('gateway_toast_code_required') ?>');
-                return;
-            }
-
             let form;
-            if (gatewayAtual === 'GGPIX') {
+            if (gateway === 'GGPIX') {
                 form = document.getElementById('formGGPIX');
-            } else if (gatewayAtual === 'IRONPAY') {
+            } else if (gateway === 'IRONPAY') {
                 form = document.getElementById('formIRONPAY');
-            } else if (gatewayAtual === 'INVICTUSPAY') {
+            } else if (gateway === 'INVICTUSPAY') {
                 form = document.getElementById('formINVICTUSPAY');
-            } else if (gatewayAtual === 'LYTRONPAY') {
+            } else if (gateway === 'LYTRONPAY') {
                 form = document.getElementById('formLYTRONPAY');
             }
 
-            if (!form) {
+            if (form) {
+                form.submit();
+            } else {
                 showToast('error', '<?= admin_t('gateway_toast_form_not_found') ?>');
-                return;
             }
-            
-            const input2fa = document.createElement('input');
-            input2fa.type = 'hidden';
-            input2fa.name = 'codigo_2fa_salvar';
-            input2fa.value = codigo2fa;
-            form.appendChild(input2fa);
-            
-            form.submit();
         }
 
         function showToast(type, message) {
