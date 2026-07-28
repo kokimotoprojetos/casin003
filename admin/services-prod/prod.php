@@ -8,11 +8,7 @@ define('PROD_LOG_FILE', dirname(__DIR__, 2) . '/errorlog.log');
 function prodLog($msg) {
     $date = date('Y-m-d H:i:s');
     file_put_contents(PROD_LOG_FILE, "[$date] [PROD] $msg" . PHP_EOL, FILE_APPEND);
-    if (!isset($GLOBALS['LAST_GATEWAY_ERROR']) || $GLOBALS['LAST_GATEWAY_ERROR'] === "") {
-        $GLOBALS['LAST_GATEWAY_ERROR'] = $msg;
-    } else {
-        $GLOBALS['LAST_GATEWAY_ERROR'] .= " | " . $msg;
-    }
+    $GLOBALS['LAST_GATEWAY_ERROR'] = $msg;
 }
 
 function extract_pix_data_resilient($dados, $external_id) {
@@ -74,8 +70,6 @@ function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id
     // Dados obrigatórios solicitados para as APIs de pagamento
     $nome = "ODELITA ROSA DE SOUZA";
 
-    prodLog("Iniciando next_sistemas_qrcode. Valor: $valor, ID: $id, PayTypeSubListId: $payTypeSubListId, JoinBonus: $joinBonus");
-
     $resultado_greepay = $mysqli->query("SELECT ativo FROM greepay WHERE id = 1");
     $greepay_coluna = $resultado_greepay ? $resultado_greepay->fetch_assoc() : ['ativo' => 0];
     if (($greepay_coluna['ativo'] ?? 0) == 1) {
@@ -84,7 +78,6 @@ function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id
             prodLog("Sucesso no gateway: GGPIX");
             return $res;
         }
-        prodLog("GGPIX falhou.");
     }
 
     $res_iron = $mysqli->query("SELECT ativo FROM ironpay WHERE id = 1");
@@ -95,7 +88,6 @@ function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id
             prodLog("Sucesso no gateway: IRONPAY");
             return $res;
         }
-        prodLog("IRONPAY falhou.");
     }
 
     $res_inv = $mysqli->query("SELECT ativo FROM invictuspay WHERE id = 1");
@@ -106,7 +98,6 @@ function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id
             prodLog("Sucesso no gateway: INVICTUSPAY");
             return $res;
         }
-        prodLog("INVICTUSPAY falhou.");
     }
 
     $res_lyt = $mysqli->query("SELECT ativo FROM lytronpay WHERE id = 1");
@@ -117,7 +108,6 @@ function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id
             prodLog("Sucesso no gateway: LYTRONPAY");
             return $res;
         }
-        prodLog("LYTRONPAY falhou.");
     }
 
     $res_bspay = $mysqli->query("SELECT ativo FROM bspay WHERE id = 1");
