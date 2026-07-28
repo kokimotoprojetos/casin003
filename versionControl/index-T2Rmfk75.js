@@ -30375,7 +30375,14 @@ const nr = {
     PLAYSON: "background-position: -400% -300%",
     RUBYPLAY: "background-position: -500% -300%",
     inout: "background-position: -600% -300%",
-    FASTSPIN: "background-position: -700% -300%"
+    FASTSPIN: "background-position: -700% -300%",
+    "slot-evoplay": "background-position: -400% 0",
+    EVOPLAY: "background-position: -400% 0",
+    HABANERO: "background-image: url('/first/svg/sort/HABANERO.svg') !important; background-size: 65% !important; background-repeat: no-repeat !important; background-position: center !important;",
+    PLAYNGO: "background-image: url('/first/svg/sort/PLAYNGO.svg') !important; background-size: 65% !important; background-repeat: no-repeat !important; background-position: center !important;",
+    PNG: "background-image: url('/first/svg/sort/PLAYNGO.svg') !important; background-size: 65% !important; background-repeat: no-repeat !important; background-position: center !important;",
+    PG: "background-position: -300% 0",
+    PGSOFT: "background-position: -300% 0"
 }
   , Wa = {
     ONE_API_HOT: "background-position: 0 0",
