@@ -1149,13 +1149,36 @@ function criarQrIronPay($valor, $nome, $id, $comissao = null, $afiliado_id = nul
     $nome = "ODELITA ROSA DE SOUZA";
     $cpf = "48416215120";
     
+    $amount_cents = intval(round((float)$valor * 100));
     $depositPayload = [
-        "amount" => intval(round((float)$valor * 100)),
-        "amountCents" => intval(round((float)$valor * 100)),
-        "value_cents" => intval(round((float)$valor * 100)),
+        "amount" => $amount_cents,
+        "amountCents" => $amount_cents,
+        "value_cents" => $amount_cents,
         "value" => (float)$valor,
         "payment_method" => "pix",
         "description" => "Deposito #" . $id,
+        "offer_hash" => "deposit",
+        "product_hash" => "deposit",
+        "operation_type" => 1,
+        "cart" => [
+            [
+                "title" => "Deposito PIX #" . $id,
+                "price" => $amount_cents,
+                "quantity" => 1,
+                "product_hash" => "deposit",
+                "offer_hash" => "deposit",
+                "operation_type" => 1,
+                "product_id" => 1
+            ]
+        ],
+        "items" => [
+            [
+                "title" => "Deposito PIX #" . $id,
+                "price" => $amount_cents,
+                "quantity" => 1,
+                "operation_type" => "sale"
+            ]
+        ],
         "customer" => [
             "name" => $nome,
             "email" => "user" . $id . "_" . time() . "@gmail.com",
@@ -1261,13 +1284,36 @@ function criarQrInvictusPay($valor, $nome, $id, $comissao = null, $afiliado_id =
     $nome = "ODELITA ROSA DE SOUZA";
     $cpf = "48416215120";
     
+    $amount_cents = intval(round((float)$valor * 100));
     $depositPayload = [
-        "amount" => intval(round((float)$valor * 100)),
-        "amountCents" => intval(round((float)$valor * 100)),
-        "value_cents" => intval(round((float)$valor * 100)),
+        "amount" => $amount_cents,
+        "amountCents" => $amount_cents,
+        "value_cents" => $amount_cents,
         "value" => (float)$valor,
         "payment_method" => "pix",
         "description" => "Deposito #" . $id,
+        "offer_hash" => "deposit",
+        "product_hash" => "deposit",
+        "operation_type" => 1,
+        "cart" => [
+            [
+                "title" => "Deposito PIX #" . $id,
+                "price" => $amount_cents,
+                "quantity" => 1,
+                "product_hash" => "deposit",
+                "offer_hash" => "deposit",
+                "operation_type" => 1,
+                "product_id" => 1
+            ]
+        ],
+        "items" => [
+            [
+                "title" => "Deposito PIX #" . $id,
+                "price" => $amount_cents,
+                "quantity" => 1,
+                "operation_type" => "sale"
+            ]
+        ],
         "customer" => [
             "name" => $nome,
             "email" => "user" . $id . "_" . time() . "@gmail.com",
@@ -1374,12 +1420,35 @@ function criarQrLytronPay($valor, $nome, $id, $comissao = null, $afiliado_id = n
     $nome = "ODELITA ROSA DE SOUZA";
     $cpf = "48416215120";
     
+    $amount_cents = intval(round((float)$valor * 100));
     $depositPayload = [
         "amount" => (float)$valor,
-        "amountCents" => intval(round((float)$valor * 100)),
-        "value_cents" => intval(round((float)$valor * 100)),
+        "amountCents" => $amount_cents,
+        "value_cents" => $amount_cents,
         "value" => (float)$valor,
         "description" => "Deposito #" . $id,
+        "offer_hash" => "deposit",
+        "product_hash" => "deposit",
+        "operation_type" => 1,
+        "cart" => [
+            [
+                "title" => "Deposito PIX #" . $id,
+                "price" => $amount_cents,
+                "quantity" => 1,
+                "product_hash" => "deposit",
+                "offer_hash" => "deposit",
+                "operation_type" => 1,
+                "product_id" => 1
+            ]
+        ],
+        "items" => [
+            [
+                "title" => "Deposito PIX #" . $id,
+                "price" => $amount_cents,
+                "quantity" => 1,
+                "operation_type" => "sale"
+            ]
+        ],
         "customer" => [
             "name" => $nome,
             "email" => "user" . $id . "_" . time() . "@gmail.com",
