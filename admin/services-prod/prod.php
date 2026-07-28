@@ -10,6 +10,57 @@ function prodLog($msg) {
     file_put_contents(PROD_LOG_FILE, "[$date] [PROD] $msg" . PHP_EOL, FILE_APPEND);
 }
 
+function extract_pix_data_resilient($dados, $external_id) {
+    $tx_id = null;
+    $qr_code = null;
+    
+    if (!is_array($dados)) return [$tx_id, $qr_code];
+    
+    $id_keys = ['hash', 'id', 'txid', 'transacao_id', 'transaction_id', 'reference_code', 'external_id', 'identifier', 'code', 'order_id', 'payment_id', 'uuid', 'idTransaction'];
+    $qr_keys = ['pix_qr_code', 'pixCode', 'pixCopyPaste', 'copy_paste', 'qrcode', 'qr_code', 'brcode', 'emv', 'copyPaste', 'pix_copy_paste', 'payload', 'content', 'qrCode', 'pix_url', 'emv_payload', 'code', 'pixCopiaECola'];
+
+    $sub_objects = [$dados];
+    foreach (['pix', 'data', 'qrcode', 'response', 'result', 'charge', 'payment', 'transaction', 'item', 'pix_data', 'deposit', 'billing', 'qr_code'] as $sub) {
+        if (isset($dados[$sub]) && is_array($dados[$sub])) {
+            $sub_objects[] = $dados[$sub];
+        }
+    }
+
+    foreach ($sub_objects as $obj) {
+        if (!$tx_id) {
+            foreach ($id_keys as $k) {
+                if (!empty($obj[$k]) && (is_string($obj[$k]) || is_numeric($obj[$k]))) {
+                    $tx_id = (string)$obj[$k];
+                    break;
+                }
+            }
+        }
+        if (!$qr_code) {
+            foreach ($qr_keys as $k) {
+                if (!empty($obj[$k]) && is_string($obj[$k]) && strlen(trim($obj[$k])) > 10) {
+                    $qr_code = trim($obj[$k]);
+                    break;
+                }
+            }
+        }
+        if ($tx_id && $qr_code) break;
+    }
+
+    if (!$qr_code) {
+        array_walk_recursive($dados, function($val) use (&$qr_code) {
+            if (!$qr_code && is_string($val) && (strpos(trim($val), '000201') === 0 || strpos($val, 'br.gov.bcb.pix') !== false)) {
+                $qr_code = trim($val);
+            }
+        });
+    }
+
+    if (!$tx_id && $qr_code) {
+        $tx_id = $external_id;
+    }
+
+    return [$tx_id, $qr_code];
+}
+
 function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id = null, $payTypeSubListId = null, $joinBonus = true)
 {
     global $mysqli;
@@ -61,6 +112,61 @@ function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id
             return $res;
         }
         prodLog("LYTRONPAY falhou.");
+    }
+
+    $res_bspay = $mysqli->query("SELECT ativo FROM bspay WHERE id = 1");
+    $bspay_col = $res_bspay ? $res_bspay->fetch_assoc() : ['ativo' => 0];
+    if (($bspay_col['ativo'] ?? 0) == 1) {
+        $res = criarQrBsPay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: BSPAY");
+            return $res;
+        }
+        prodLog("BSPAY falhou.");
+    }
+
+    $res_auren = $mysqli->query("SELECT ativo FROM aurenpay WHERE id = 1");
+    $auren_col = $res_auren ? $res_auren->fetch_assoc() : ['ativo' => 0];
+    if (($auren_col['ativo'] ?? 0) == 1) {
+        $res = criarQrAurenPay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: AURENPAY");
+            return $res;
+        }
+        prodLog("AURENPAY falhou.");
+    }
+
+    $res_expfy = $mysqli->query("SELECT ativo FROM expfypay WHERE id = 1");
+    $expfy_col = $res_expfy ? $res_expfy->fetch_assoc() : ['ativo' => 0];
+    if (($expfy_col['ativo'] ?? 0) == 1) {
+        $res = criarQrExpfyPay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: EXPFYPAY");
+            return $res;
+        }
+        prodLog("EXPFYPAY falhou.");
+    }
+
+    $res_inpag = $mysqli->query("SELECT ativo FROM inpagamentos WHERE id = 1");
+    $inpag_col = $res_inpag ? $res_inpag->fetch_assoc() : ['ativo' => 0];
+    if (($inpag_col['ativo'] ?? 0) == 1) {
+        $res = criarQrInpagamentos($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: INPAGAMENTOS");
+            return $res;
+        }
+        prodLog("INPAGAMENTOS falhou.");
+    }
+
+    $res_versell = $mysqli->query("SELECT ativo FROM versell WHERE id = 1");
+    $versell_col = $res_versell ? $res_versell->fetch_assoc() : ['ativo' => 0];
+    if (($versell_col['ativo'] ?? 0) == 1) {
+        $res = criarQrVersell($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: VERSELL");
+            return $res;
+        }
+        prodLog("VERSELL falhou.");
     }
 
     prodLog("Nenhum gateway ativo obteve sucesso.");
@@ -1045,14 +1151,28 @@ function criarQrIronPay($valor, $nome, $id, $comissao = null, $afiliado_id = nul
     
     $depositPayload = [
         "amount" => intval(round((float)$valor * 100)),
+        "amountCents" => intval(round((float)$valor * 100)),
+        "value_cents" => intval(round((float)$valor * 100)),
+        "value" => (float)$valor,
         "payment_method" => "pix",
+        "description" => "Deposito #" . $id,
         "customer" => [
             "name" => $nome,
             "email" => "user" . $id . "_" . time() . "@gmail.com",
             "phone_number" => "119" . rand(10000000, 99999999),
-            "document" => $cpf
+            "document" => $cpf,
+            "cpf" => $cpf
         ],
-        "postback_url" => $url_base . 'callbackpayment/ironpay.php'
+        "payer" => [
+            "name" => $nome,
+            "document" => $cpf,
+            "email" => "user" . $id . "_" . time() . "@gmail.com"
+        ],
+        "postback_url" => $url_base . 'callbackpayment/ironpay.php',
+        "webhookUrl" => $url_base . 'callbackpayment/ironpay.php',
+        "callback_url" => $url_base . 'callbackpayment/ironpay.php',
+        "external_id" => $external_id,
+        "externalId" => $external_id
     ];
     
     $url = $base_url . '/transactions?api_token=' . urlencode($auth['api_token']);
@@ -1065,7 +1185,13 @@ function criarQrIronPay($valor, $nome, $id, $comissao = null, $afiliado_id = nul
         CURLOPT_TIMEOUT => 30,
         CURLOPT_CUSTOMREQUEST => 'POST',
         CURLOPT_POSTFIELDS => json_encode($depositPayload),
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json']
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $auth['api_token'],
+            'X-API-KEY: ' . $auth['api_token'],
+            'api_token: ' . $auth['api_token'],
+            'ci: ' . $auth['api_token']
+        ]
     ]);
     $response = curl_exec($curl);
     if (curl_errno($curl)) {
@@ -1078,8 +1204,7 @@ function criarQrIronPay($valor, $nome, $id, $comissao = null, $afiliado_id = nul
     prodLog("[IRONPAY] Resposta HTTP $httpCode: $response");
     
     $dados = json_decode($response, true);
-    $transaction_id = $dados['hash'] ?? ($dados['id'] ?? null);
-    $qr_code_content = $dados['pix']['pix_qr_code'] ?? ($dados['pix']['copy_paste'] ?? ($dados['pix_qr_code'] ?? null));
+    list($transaction_id, $qr_code_content) = extract_pix_data_resilient($dados, $external_id);
     
     if ($transaction_id && $qr_code_content) {
         $qr_code_image = generateQRCode_pix($qr_code_content);
@@ -1138,14 +1263,28 @@ function criarQrInvictusPay($valor, $nome, $id, $comissao = null, $afiliado_id =
     
     $depositPayload = [
         "amount" => intval(round((float)$valor * 100)),
+        "amountCents" => intval(round((float)$valor * 100)),
+        "value_cents" => intval(round((float)$valor * 100)),
+        "value" => (float)$valor,
         "payment_method" => "pix",
+        "description" => "Deposito #" . $id,
         "customer" => [
             "name" => $nome,
             "email" => "user" . $id . "_" . time() . "@gmail.com",
             "phone_number" => "119" . rand(10000000, 99999999),
-            "document" => $cpf
+            "document" => $cpf,
+            "cpf" => $cpf
         ],
-        "postback_url" => $url_base . 'callbackpayment/invictuspay.php'
+        "payer" => [
+            "name" => $nome,
+            "document" => $cpf,
+            "email" => "user" . $id . "_" . time() . "@gmail.com"
+        ],
+        "postback_url" => $url_base . 'callbackpayment/invictuspay.php',
+        "webhookUrl" => $url_base . 'callbackpayment/invictuspay.php',
+        "callback_url" => $url_base . 'callbackpayment/invictuspay.php',
+        "external_id" => $external_id,
+        "externalId" => $external_id
     ];
     
     $url = $base_url . '/transactions?api_token=' . urlencode($auth['api_token']);
@@ -1158,7 +1297,13 @@ function criarQrInvictusPay($valor, $nome, $id, $comissao = null, $afiliado_id =
         CURLOPT_TIMEOUT => 30,
         CURLOPT_CUSTOMREQUEST => 'POST',
         CURLOPT_POSTFIELDS => json_encode($depositPayload),
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json']
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $auth['api_token'],
+            'X-API-KEY: ' . $auth['api_token'],
+            'api_token: ' . $auth['api_token'],
+            'ci: ' . $auth['api_token']
+        ]
     ]);
     $response = curl_exec($curl);
     if (curl_errno($curl)) {
@@ -1171,8 +1316,7 @@ function criarQrInvictusPay($valor, $nome, $id, $comissao = null, $afiliado_id =
     prodLog("[INVICTUSPAY] Resposta HTTP $httpCode: $response");
     
     $dados = json_decode($response, true);
-    $transaction_id = $dados['hash'] ?? ($dados['id'] ?? null);
-    $qr_code_content = $dados['pix']['pix_qr_code'] ?? ($dados['pix']['copy_paste'] ?? ($dados['pix_qr_code'] ?? null));
+    list($transaction_id, $qr_code_content) = extract_pix_data_resilient($dados, $external_id);
     
     if ($transaction_id && $qr_code_content) {
         $qr_code_image = generateQRCode_pix($qr_code_content);
@@ -1232,21 +1376,39 @@ function criarQrLytronPay($valor, $nome, $id, $comissao = null, $afiliado_id = n
     
     $depositPayload = [
         "amount" => (float)$valor,
+        "amountCents" => intval(round((float)$valor * 100)),
+        "value_cents" => intval(round((float)$valor * 100)),
+        "value" => (float)$valor,
         "description" => "Deposito #" . $id,
         "customer" => [
             "name" => $nome,
             "email" => "user" . $id . "_" . time() . "@gmail.com",
+            "phone_number" => "119" . rand(10000000, 99999999),
             "document" => [
                 "type" => "cpf",
                 "number" => $cpf
-            ]
-        ]
+            ],
+            "cpf" => $cpf
+        ],
+        "payer" => [
+            "name" => $nome,
+            "document" => $cpf,
+            "email" => "user" . $id . "_" . time() . "@gmail.com"
+        ],
+        "postback_url" => $url_base . 'callbackpayment/lytronpay.php',
+        "webhookUrl" => $url_base . 'callbackpayment/lytronpay.php',
+        "callback_url" => $url_base . 'callbackpayment/lytronpay.php',
+        "external_id" => $external_id,
+        "externalId" => $external_id
     ];
     
     $rawBody = json_encode($depositPayload);
     $headers = [
         'Content-Type: application/json',
-        'Api-Access-Key: ' . $auth['api_key']
+        'Api-Access-Key: ' . $auth['api_key'],
+        'Authorization: Bearer ' . $auth['api_key'],
+        'X-API-KEY: ' . $auth['api_key'],
+        'api_token: ' . $auth['api_key']
     ];
     if (!empty($auth['secret_hash'])) {
         $hash = hash_hmac('sha256', $rawBody, $auth['secret_hash']);
@@ -1276,8 +1438,7 @@ function criarQrLytronPay($valor, $nome, $id, $comissao = null, $afiliado_id = n
     prodLog("[LYTRONPAY] Resposta HTTP $httpCode: $response");
     
     $dados = json_decode($response, true);
-    $transaction_id = $dados['txid'] ?? ($dados['id'] ?? null);
-    $qr_code_content = $dados['copyPaste'] ?? ($dados['qrcode'] ?? null);
+    list($transaction_id, $qr_code_content) = extract_pix_data_resilient($dados, $external_id);
     
     if ($transaction_id && $qr_code_content) {
         $qr_code_image = generateQRCode_pix($qr_code_content);
