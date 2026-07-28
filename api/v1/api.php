@@ -8,7 +8,17 @@ function sendApiError($code, $message)
 {
     if (ob_get_length()) ob_clean();
     http_response_code($code);
-    echo json_encode(['error' => $message]);
+    // Emit a JSON-RPC style error object to satisfy tRPC client expectations
+    $errorPayload = [
+        "error" => [
+            "json" => [
+                "message" => $message,
+                "code" => $code,
+                "data" => null
+            ]
+        ]
+    ];
+    echo json_encode($errorPayload);
     exit;
 }
 $rotaEncontrada = false;
