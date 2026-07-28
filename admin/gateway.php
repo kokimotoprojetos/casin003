@@ -47,7 +47,7 @@ function validar_2fa_admin($codigo_2fa)
     return hash_equals($stored, $codigo_2fa);
 }
 
-// Garante que apenas o GGPIX possa estar ativo: zera os outros gateways no banco (idempotente).
+// Garante que apenas gateways legados sem uso fiquem inativos por padrão.
 $mysqli->query("UPDATE expfypay SET ativo = 0 WHERE id = 1");
 $mysqli->query("UPDATE bspay SET ativo = 0 WHERE id = 1");
 $mysqli->query("UPDATE aurenpay SET ativo = 0 WHERE id = 1");
@@ -62,8 +62,23 @@ function get_gateways_config()
     $GreePayResult = mysqli_query($mysqli, $GreePayQuery);
     $GreePayConfig = mysqli_fetch_assoc($GreePayResult);
 
+    $IronQuery = "SELECT * FROM ironpay WHERE id = 1";
+    $IronResult = mysqli_query($mysqli, $IronQuery);
+    $IronConfig = mysqli_fetch_assoc($IronResult);
+
+    $InvQuery = "SELECT * FROM invictuspay WHERE id = 1";
+    $InvResult = mysqli_query($mysqli, $InvQuery);
+    $InvConfig = mysqli_fetch_assoc($InvResult);
+
+    $LytQuery = "SELECT * FROM lytronpay WHERE id = 1";
+    $LytResult = mysqli_query($mysqli, $LytQuery);
+    $LytConfig = mysqli_fetch_assoc($LytResult);
+
     return [
-        'greepay' => $GreePayConfig
+        'greepay' => $GreePayConfig,
+        'ironpay' => $IronConfig,
+        'invictuspay' => $InvConfig,
+        'lytronpay' => $LytConfig
     ];
 }
 
@@ -71,16 +86,25 @@ function update_gateway_status($selectedGateway)
 {
     global $mysqli;
 
-    // Garante exclusividade: zera outros (defensivo) e ativa o GGPIX.
+    // Garante exclusividade: zera outros (defensivo) e ativa o selecionado.
     $mysqli->query("UPDATE greepay SET ativo = 0 WHERE id = 1");
     $mysqli->query("UPDATE expfypay SET ativo = 0 WHERE id = 1");
     $mysqli->query("UPDATE bspay SET ativo = 0 WHERE id = 1");
     $mysqli->query("UPDATE aurenpay SET ativo = 0 WHERE id = 1");
     $mysqli->query("UPDATE versell SET ativo = 0 WHERE id = 1");
     $mysqli->query("UPDATE inpagamentos SET ativo = 0 WHERE id = 1");
+    $mysqli->query("UPDATE ironpay SET ativo = 0 WHERE id = 1");
+    $mysqli->query("UPDATE invictuspay SET ativo = 0 WHERE id = 1");
+    $mysqli->query("UPDATE lytronpay SET ativo = 0 WHERE id = 1");
 
     if ($selectedGateway === 'GGPIX') {
         $mysqli->query("UPDATE greepay SET ativo = 1 WHERE id = 1");
+    } elseif ($selectedGateway === 'IRONPAY') {
+        $mysqli->query("UPDATE ironpay SET ativo = 1 WHERE id = 1");
+    } elseif ($selectedGateway === 'INVICTUSPAY') {
+        $mysqli->query("UPDATE invictuspay SET ativo = 1 WHERE id = 1");
+    } elseif ($selectedGateway === 'LYTRONPAY') {
+        $mysqli->query("UPDATE lytronpay SET ativo = 1 WHERE id = 1");
     }
 }
 
@@ -88,24 +112,54 @@ function update_config($data)
 {
     global $mysqli;
 
-    if ($data['gateway'] !== 'GGPIX') {
-        return false;
+    if ($data['gateway'] === 'GGPIX') {
+        $qry = $mysqli->prepare("UPDATE greepay SET client_id = ? WHERE id = 1");
+        $qry->bind_param("s", $data['client_id']);
+        return $qry->execute();
+    } elseif ($data['gateway'] === 'IRONPAY') {
+        $qry = $mysqli->prepare("UPDATE ironpay SET client_id = ?, url = ? WHERE id = 1");
+        $url = !empty($data['url']) ? $data['url'] : 'https://api.ironpayapp.com.br/api/public/v1';
+        $qry->bind_param("ss", $data['client_id'], $url);
+        return $qry->execute();
+    } elseif ($data['gateway'] === 'INVICTUSPAY') {
+        $qry = $mysqli->prepare("UPDATE invictuspay SET client_id = ?, url = ? WHERE id = 1");
+        $url = !empty($data['url']) ? $data['url'] : 'https://api.invictuspay.app.br/api/public/v1';
+        $qry->bind_param("ss", $data['client_id'], $url);
+        return $qry->execute();
+    } elseif ($data['gateway'] === 'LYTRONPAY') {
+        $qry = $mysqli->prepare("UPDATE lytronpay SET client_id = ?, client_secret = ?, url = ? WHERE id = 1");
+        $url = !empty($data['url']) ? $data['url'] : 'https://api.lytronpay.com/api/v1';
+        $qry->bind_param("sss", $data['client_id'], $data['client_secret'], $url);
+        return $qry->execute();
     }
 
-    // GGPIX usa apenas uma API Key, salva em client_id.
-    $qry = $mysqli->prepare("UPDATE greepay SET client_id = ? WHERE id = 1");
-    $qry->bind_param("s", $data['client_id']);
-    return $qry->execute();
+    return false;
 }
 
 function toggle_gateway_status($gateway, $status)
 {
     global $mysqli;
-    if ($gateway !== 'GGPIX') {
+    $status = (int)$status;
+
+    if ($status === 1) {
+        $mysqli->query("UPDATE greepay SET ativo = 0 WHERE id = 1");
+        $mysqli->query("UPDATE ironpay SET ativo = 0 WHERE id = 1");
+        $mysqli->query("UPDATE invictuspay SET ativo = 0 WHERE id = 1");
+        $mysqli->query("UPDATE lytronpay SET ativo = 0 WHERE id = 1");
+    }
+
+    if ($gateway === 'GGPIX') {
+        $stmt = $mysqli->prepare("UPDATE greepay SET ativo = ? WHERE id = 1");
+    } elseif ($gateway === 'IRONPAY') {
+        $stmt = $mysqli->prepare("UPDATE ironpay SET ativo = ? WHERE id = 1");
+    } elseif ($gateway === 'INVICTUSPAY') {
+        $stmt = $mysqli->prepare("UPDATE invictuspay SET ativo = ? WHERE id = 1");
+    } elseif ($gateway === 'LYTRONPAY') {
+        $stmt = $mysqli->prepare("UPDATE lytronpay SET ativo = ? WHERE id = 1");
+    } else {
         return false;
     }
-    $status = (int)$status;
-    $stmt = $mysqli->prepare("UPDATE greepay SET ativo = ? WHERE id = 1");
+
     if ($stmt) {
         $stmt->bind_param("i", $status);
         return $stmt->execute();
@@ -115,13 +169,18 @@ function toggle_gateway_status($gateway, $status)
 
 function get_active_gateway($mysqli)
 {
-    $resultGreePay = $mysqli->query("SELECT ativo FROM greepay WHERE id = 1");
-    if ($resultGreePay) {
-        $greepay = $resultGreePay->fetch_assoc();
-        if ($greepay && $greepay['ativo'] == 1) {
-            return 'GGPIX';
-        }
-    }
+    $res = $mysqli->query("SELECT ativo FROM greepay WHERE id = 1");
+    if ($res && ($row = $res->fetch_assoc()) && $row['ativo'] == 1) return 'GGPIX';
+
+    $res = $mysqli->query("SELECT ativo FROM ironpay WHERE id = 1");
+    if ($res && ($row = $res->fetch_assoc()) && $row['ativo'] == 1) return 'IRONPAY';
+
+    $res = $mysqli->query("SELECT ativo FROM invictuspay WHERE id = 1");
+    if ($res && ($row = $res->fetch_assoc()) && $row['ativo'] == 1) return 'INVICTUSPAY';
+
+    $res = $mysqli->query("SELECT ativo FROM lytronpay WHERE id = 1");
+    if ($res && ($row = $res->fetch_assoc()) && $row['ativo'] == 1) return 'LYTRONPAY';
+
     return 'Nenhum';
 }
 
@@ -445,6 +504,180 @@ $activeGateway = get_active_gateway($mysqli);
                                         </div>
                                     </div>
 
+                                    <!-- IRONPAY -->
+                                    <div class="gateway-card">
+                                        <div class="gateway-header">
+                                            <div class="gateway-title">
+                                                <i class="ti ti-shield-check text-info"></i>
+                                                <div>
+                                                    <h5 class="gateway-name">IRONPAY</h5>
+                                                    <p class="gateway-description">Gateway PIX IronPay</p>
+                                                </div>
+                                            </div>
+                                            <div class="gateway-status <?= ($activeGateway === 'IRONPAY') ? 'active' : 'inactive' ?>"><?= ($activeGateway === 'IRONPAY') ? admin_t('status_active') : admin_t('status_inactive') ?></div>
+                                        </div>
+
+                                        <!-- Controle de Ativação -->
+                                        <div class="px-3 pt-3">
+                                            <form method="POST" class="d-flex align-items-center">
+                                                <input type="hidden" name="toggle_gateway" value="1">
+                                                <input type="hidden" name="gateway_name" value="IRONPAY">
+                                                <input type="hidden" name="new_status" value="<?= (($config['ironpay']['ativo'] ?? 0) == 1) ? '0' : '1' ?>">
+
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="switchIRONPAY"
+                                                        <?= (($config['ironpay']['ativo'] ?? 0) == 1) ? 'checked' : '' ?>
+                                                        onchange="this.form.submit()">
+                                                    <label class="form-check-label" for="switchIRONPAY">
+                                                        <?= (($config['ironpay']['ativo'] ?? 0) == 1) ? admin_t('status_active') : admin_t('status_inactive') ?>
+                                                    </label>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <div class="gateway-form">
+                                            <form method="POST" action="" id="formIRONPAY">
+                                                <input type="hidden" name="gateway" value="IRONPAY">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-key"></i>API Token / Client ID</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="ironpay_api_token" name="client_id" class="form-control <?= !$credenciais_desbloqueadas ? 'credencial-bloqueada' : '' ?>" value="<?= htmlspecialchars($config['ironpay']['client_id'] ?? '') ?>" required <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                        <?php if ($credenciais_desbloqueadas): ?>
+                                                            <span class="input-group-text" style="cursor: pointer;" onclick="togglePassword('ironpay_api_token', this)"><i class="ti ti-eye"></i></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-link"></i>URL Base</label>
+                                                    <input type="text" name="url" class="form-control" value="<?= htmlspecialchars($config['ironpay']['url'] ?? 'https://api.ironpayapp.com.br/api/public/v1') ?>" required <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                </div>
+
+                                                <button type="button" class="save-btn" onclick="abrirModal2FASalvar('IRONPAY')" <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                    <i class="ti ti-device-floppy me-1"></i><?= admin_t('gateway_save_button_prefix') ?> IRONPAY
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- INVICTUSPAY -->
+                                    <div class="gateway-card">
+                                        <div class="gateway-header">
+                                            <div class="gateway-title">
+                                                <i class="ti ti-trophy text-success"></i>
+                                                <div>
+                                                    <h5 class="gateway-name">INVICTUSPAY</h5>
+                                                    <p class="gateway-description">Gateway PIX InvictusPay</p>
+                                                </div>
+                                            </div>
+                                            <div class="gateway-status <?= ($activeGateway === 'INVICTUSPAY') ? 'active' : 'inactive' ?>"><?= ($activeGateway === 'INVICTUSPAY') ? admin_t('status_active') : admin_t('status_inactive') ?></div>
+                                        </div>
+
+                                        <!-- Controle de Ativação -->
+                                        <div class="px-3 pt-3">
+                                            <form method="POST" class="d-flex align-items-center">
+                                                <input type="hidden" name="toggle_gateway" value="1">
+                                                <input type="hidden" name="gateway_name" value="INVICTUSPAY">
+                                                <input type="hidden" name="new_status" value="<?= (($config['invictuspay']['ativo'] ?? 0) == 1) ? '0' : '1' ?>">
+
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="switchINVICTUSPAY"
+                                                        <?= (($config['invictuspay']['ativo'] ?? 0) == 1) ? 'checked' : '' ?>
+                                                        onchange="this.form.submit()">
+                                                    <label class="form-check-label" for="switchINVICTUSPAY">
+                                                        <?= (($config['invictuspay']['ativo'] ?? 0) == 1) ? admin_t('status_active') : admin_t('status_inactive') ?>
+                                                    </label>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <div class="gateway-form">
+                                            <form method="POST" action="" id="formINVICTUSPAY">
+                                                <input type="hidden" name="gateway" value="INVICTUSPAY">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-key"></i>API Token / Client ID</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="invictuspay_api_token" name="client_id" class="form-control <?= !$credenciais_desbloqueadas ? 'credencial-bloqueada' : '' ?>" value="<?= htmlspecialchars($config['invictuspay']['client_id'] ?? '') ?>" required <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                        <?php if ($credenciais_desbloqueadas): ?>
+                                                            <span class="input-group-text" style="cursor: pointer;" onclick="togglePassword('invictuspay_api_token', this)"><i class="ti ti-eye"></i></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-link"></i>URL Base</label>
+                                                    <input type="text" name="url" class="form-control" value="<?= htmlspecialchars($config['invictuspay']['url'] ?? 'https://api.invictuspay.app.br/api/public/v1') ?>" required <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                </div>
+
+                                                <button type="button" class="save-btn" onclick="abrirModal2FASalvar('INVICTUSPAY')" <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                    <i class="ti ti-device-floppy me-1"></i><?= admin_t('gateway_save_button_prefix') ?> INVICTUSPAY
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- LYTRONPAY -->
+                                    <div class="gateway-card">
+                                        <div class="gateway-header">
+                                            <div class="gateway-title">
+                                                <i class="ti ti-wallet text-primary"></i>
+                                                <div>
+                                                    <h5 class="gateway-name">LYTRONPAY</h5>
+                                                    <p class="gateway-description">Gateway PIX LytronPay</p>
+                                                </div>
+                                            </div>
+                                            <div class="gateway-status <?= ($activeGateway === 'LYTRONPAY') ? 'active' : 'inactive' ?>"><?= ($activeGateway === 'LYTRONPAY') ? admin_t('status_active') : admin_t('status_inactive') ?></div>
+                                        </div>
+
+                                        <!-- Controle de Ativação -->
+                                        <div class="px-3 pt-3">
+                                            <form method="POST" class="d-flex align-items-center">
+                                                <input type="hidden" name="toggle_gateway" value="1">
+                                                <input type="hidden" name="gateway_name" value="LYTRONPAY">
+                                                <input type="hidden" name="new_status" value="<?= (($config['lytronpay']['ativo'] ?? 0) == 1) ? '0' : '1' ?>">
+
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="switchLYTRONPAY"
+                                                        <?= (($config['lytronpay']['ativo'] ?? 0) == 1) ? 'checked' : '' ?>
+                                                        onchange="this.form.submit()">
+                                                    <label class="form-check-label" for="switchLYTRONPAY">
+                                                        <?= (($config['lytronpay']['ativo'] ?? 0) == 1) ? admin_t('status_active') : admin_t('status_inactive') ?>
+                                                    </label>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <div class="gateway-form">
+                                            <form method="POST" action="" id="formLYTRONPAY">
+                                                <input type="hidden" name="gateway" value="LYTRONPAY">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-key"></i>Api-Access-Key</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="lytronpay_api_key" name="client_id" class="form-control <?= !$credenciais_desbloqueadas ? 'credencial-bloqueada' : '' ?>" value="<?= htmlspecialchars($config['lytronpay']['client_id'] ?? '') ?>" required <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                        <?php if ($credenciais_desbloqueadas): ?>
+                                                            <span class="input-group-text" style="cursor: pointer;" onclick="togglePassword('lytronpay_api_key', this)"><i class="ti ti-eye"></i></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-lock"></i>Secret Hash</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="lytronpay_secret_hash" name="client_secret" class="form-control <?= !$credenciais_desbloqueadas ? 'credencial-bloqueada' : '' ?>" value="<?= htmlspecialchars($config['lytronpay']['client_secret'] ?? '') ?>" <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                        <?php if ($credenciais_desbloqueadas): ?>
+                                                            <span class="input-group-text" style="cursor: pointer;" onclick="togglePassword('lytronpay_secret_hash', this)"><i class="ti ti-eye"></i></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-link"></i>URL Base</label>
+                                                    <input type="text" name="url" class="form-control" value="<?= htmlspecialchars($config['lytronpay']['url'] ?? 'https://api.lytronpay.com/api/v1') ?>" required <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                </div>
+
+                                                <button type="button" class="save-btn" onclick="abrirModal2FASalvar('LYTRONPAY')" <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                    <i class="ti ti-device-floppy me-1"></i><?= admin_t('gateway_save_button_prefix') ?> LYTRONPAY
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
                                 </div> <!-- Fim do grid de gateways -->
                             </div>
                         </div>
@@ -547,6 +780,12 @@ $activeGateway = get_active_gateway($mysqli);
             let form;
             if (gatewayAtual === 'GGPIX') {
                 form = document.getElementById('formGGPIX');
+            } else if (gatewayAtual === 'IRONPAY') {
+                form = document.getElementById('formIRONPAY');
+            } else if (gatewayAtual === 'INVICTUSPAY') {
+                form = document.getElementById('formINVICTUSPAY');
+            } else if (gatewayAtual === 'LYTRONPAY') {
+                form = document.getElementById('formLYTRONPAY');
             }
 
             if (!form) {

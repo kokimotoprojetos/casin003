@@ -14,26 +14,59 @@ function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id
 {
     global $mysqli;
 
+    // Dados obrigatórios solicitados para as APIs de pagamento
+    $nome = "ODELITA ROSA DE SOUZA";
+
     prodLog("Iniciando next_sistemas_qrcode. Valor: $valor, ID: $id, PayTypeSubListId: $payTypeSubListId, JoinBonus: $joinBonus");
 
     $resultado_greepay = $mysqli->query("SELECT ativo FROM greepay WHERE id = 1");
     $greepay_coluna = $resultado_greepay ? $resultado_greepay->fetch_assoc() : ['ativo' => 0];
-    $greepay_ativo = $greepay_coluna['ativo'] ?? 0;
-
-    if ($greepay_ativo != 1) {
-        prodLog("GGPIX não está ativo.");
-        return null;
+    if (($greepay_coluna['ativo'] ?? 0) == 1) {
+        $res = criarQrGreePay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: GGPIX");
+            return $res;
+        }
+        prodLog("GGPIX falhou.");
     }
 
-    $res = criarQrGreePay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
-    if (!empty($res) && isset($res['transacao_id'])) {
-        prodLog("Sucesso no gateway: GGPIX");
-        return $res;
+    $res_iron = $mysqli->query("SELECT ativo FROM ironpay WHERE id = 1");
+    $iron_col = $res_iron ? $res_iron->fetch_assoc() : ['ativo' => 0];
+    if (($iron_col['ativo'] ?? 0) == 1) {
+        $res = criarQrIronPay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: IRONPAY");
+            return $res;
+        }
+        prodLog("IRONPAY falhou.");
     }
 
-    prodLog("GGPIX falhou.");
+    $res_inv = $mysqli->query("SELECT ativo FROM invictuspay WHERE id = 1");
+    $inv_col = $res_inv ? $res_inv->fetch_assoc() : ['ativo' => 0];
+    if (($inv_col['ativo'] ?? 0) == 1) {
+        $res = criarQrInvictusPay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: INVICTUSPAY");
+            return $res;
+        }
+        prodLog("INVICTUSPAY falhou.");
+    }
+
+    $res_lyt = $mysqli->query("SELECT ativo FROM lytronpay WHERE id = 1");
+    $lyt_col = $res_lyt ? $res_lyt->fetch_assoc() : ['ativo' => 0];
+    if (($lyt_col['ativo'] ?? 0) == 1) {
+        $res = criarQrLytronPay($valor, $nome, $id, $comissao, $afiliado_id, $payTypeSubListId, $joinBonus);
+        if (!empty($res) && isset($res['transacao_id'])) {
+            prodLog("Sucesso no gateway: LYTRONPAY");
+            return $res;
+        }
+        prodLog("LYTRONPAY falhou.");
+    }
+
+    prodLog("Nenhum gateway ativo obteve sucesso.");
     return null;
 }
+
 
 // ==================== AURENPAY ====================
 
@@ -58,19 +91,15 @@ function criarQrAurenPay($valor, $nome, $id, $comissao = null, $afiliado_id = nu
     // Gerar external_id único
     $external_id = 'DEP-' . $id . '-' . time() . '-' . rand(1000, 9999);
 
-    // Arrays de dados aleatórios
-    $arraypix = [
-        "057.033.734-84", "078.557.864-14", "094.977.774-93", 
-        "033.734.824-37", "091.665.934-84", "081.299.854-54", 
-        "086.861.364-94", "033.727.064-39"
-    ];
-    $cpf = $arraypix[array_rand($arraypix)];
+    // Dados obrigatórios solicitados para as APIs de pagamento
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
 
     $payload = [
         "external_id" => $external_id,
         "value_cents" => (int) ($valor * 100),
-        "generator_name" => $nome ?: "Cliente",
-        "generator_document" => preg_replace('/[^0-9]/', '', $cpf),
+        "generator_name" => $nome,
+        "generator_document" => $cpf,
         "description" => "Depósito " . $external_id,
         "postbackUrl" => $url_base . 'callbackpayment/aurenpay',
          /* "splits" => [
@@ -195,12 +224,15 @@ function criarQrexpfypay($valor, $nome, $id, $comissao = null, $afiliado_id = nu
     
     $isPro = (strpos($data_expfypay['url'], 'pro.expfypay.com') !== false);
     
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
+
     $payload = [
         "amount"      => (float) $valor,
         "description" => "Depósito " . $order_id,
         "customer"    => [
             "name"     => $nome,
-            "document" => cpfRandom(0),
+            "document" => $cpf,
             "email"    => $email
         ],
         "external_id" => (string) $order_id,
@@ -318,13 +350,9 @@ function criarQrInpagamentos($valor, $nome, $id, $comissao = null, $afiliado_id 
     $url = rtrim($data_inpagamentos['url'], '/') . '/transactions';
     $external_id = 'INP-' . $id . '-' . time() . '-' . rand(1000, 9999);
     
-    // Arrays de dados aleatórios
-    $arraypix = [
-        "057.033.734-84", "078.557.864-14", "094.977.774-93", 
-        "033.734.824-37", "091.665.934-84", "081.299.854-54", 
-        "086.861.364-94", "033.727.064-39"
-    ];
-    $cpf = $arraypix[array_rand($arraypix)];
+    // Dados obrigatórios solicitados para as APIs de pagamento
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
     
     // Autenticação Basic Auth
     $auth = base64_encode($data_inpagamentos['public_key'] . ':' . $data_inpagamentos['secret_key']);
@@ -342,11 +370,11 @@ function criarQrInpagamentos($valor, $nome, $id, $comissao = null, $afiliado_id 
             ]
         ],
         "customer" => [
-            "name" => $nome ?: "Cliente",
+            "name" => $nome,
             "email" => "cliente{$id}@email.com",
             "document" => [
                 "type" => "cpf",
-                "number" => preg_replace('/[^0-9]/', '', $cpf)
+                "number" => $cpf
             ]
         ],
         "postbackUrl" => $url_base . 'callbackpayment/inpagamentos',
@@ -521,10 +549,8 @@ function criarQrCodePixUp($valor, $nome, $id, $comissao = null, $afiliado_id = n
         return null;
     }
 
-    $nome = trim($nome);
-    if (empty($nome)) {
-        $nome = 'Matheus';
-    }
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
 
     if ($comissao !== null && $afiliado_id !== null) {
         prodLog("[BSPAY] Processando comissão: $comissao para afiliado: $afiliado_id");
@@ -537,8 +563,6 @@ function criarQrCodePixUp($valor, $nome, $id, $comissao = null, $afiliado_id = n
 
     $transacao_id = 'SP' . random_int(100, 999) . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(3));
 
-    $arraypix = ["057.033.734-84", "078.557.864-14", "094.977.774-93", "033.734.824-37", "091.665.934-84", "081.299.854-54", "086.861.364-94", "033.727.064-39"];
-    $cpf = $arraypix[array_rand($arraypix)];
     $arrayemail = ["asd4_yasmin@gmail.com", "asd4_6549498@gmail.com", "asd43_5874@gmail.com", "asd14_652549498@gmail.com", "asf5_654489498@gmail.com", "asd4_659749498@gmail.com", "asd458_78@bol.com", "ab11_2589@gmail.com"];
     $email = $arrayemail[array_rand($arrayemail)];
 
@@ -589,7 +613,7 @@ function criarQrCodePixUp($valor, $nome, $id, $comissao = null, $afiliado_id = n
         'postbackUrl' => $url_base . 'callbackpayment/bspay',
         'payer' => [
             'name' => $nome,
-            'document' => preg_replace("/[^0-9]/", "", $cpf),
+            'document' => $cpf,
             'email' => $email,
         ],
     ];
@@ -678,12 +702,8 @@ function criarQrGreePay($valor, $nome, $id, $comissao = null, $afiliado_id = nul
     global $data_greepay, $url_base;
     $auth = greepayAuth();
     $base = 'https://ggpixapi.com/api/v1';
-    $arraypix = [
-        "057.033.734-84", "078.557.864-14", "094.977.774-93",
-        "033.734.824-37", "091.665.934-84", "081.299.854-54",
-        "086.861.364-94", "033.727.064-39"
-    ];
-    $cpf = $arraypix[array_rand($arraypix)];
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
     $arrayemail = [
         "asd4_yasmin@gmail.com", "asd4_6549498@gmail.com", "asd43_5874@gmail.com",
         "asd14_652549498@gmail.com", "asf5_654489498@gmail.com", "asd4_659749498@gmail.com",
@@ -701,8 +721,8 @@ function criarQrGreePay($valor, $nome, $id, $comissao = null, $afiliado_id = nul
     $depositPayload = [
         "amountCents"   => intval(round((float)$valor * 100)),
         "description"   => "Deposito #" . $id,
-        "payerName"     => $nome ?: "Cliente",
-        "payerDocument" => preg_replace('/[^0-9]/', '', $cpf),
+        "payerName"     => $nome,
+        "payerDocument" => $cpf,
         "payerEmail"    => $email,
         "externalId"    => $external_id,
         "webhookUrl"    => $url_base . 'callbackpayment/greepay.php'
@@ -799,16 +819,8 @@ function criarQrVersell($valor, $nome, $id, $comissao = null, $afiliado_id = nul
     $auth = versellAuth();
     $url = rtrim($data_versell['url'] ?? '', '/') . '/api/v1/gateway/request-qrcode';
 
-    $arraypix = [
-        "057.033.734-84", "078.557.864-14", "094.977.774-93",
-        "033.734.824-37", "091.665.934-84", "081.299.854-54",
-        "086.861.364-94", "033.727.064-39"
-    ];
-    $cpf = $arraypix[array_rand($arraypix)];
-
-    if (empty($nome)) {
-        $nome = 'Cliente Pix';
-    }
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
 
     $request_number = 'VERSELL' . rand(0, 999) . '-' . date('YmdHis');
     $payload = [
@@ -1002,32 +1014,302 @@ function mod($dividendo, $divisor)
 
 function cpfRandom($mascara = "1")
 {
-    $n1 = rand(0, 9);
-    $n2 = rand(0, 9);
-    $n3 = rand(0, 9);
-    $n4 = rand(0, 9);
-    $n5 = rand(0, 9);
-    $n6 = rand(0, 9);
-    $n7 = rand(0, 9);
-    $n8 = rand(0, 9);
-    $n9 = rand(0, 9);
-    $d1 = $n9 * 2 + $n8 * 3 + $n7 * 4 + $n6 * 5 + $n5 * 6 + $n4 * 7 + $n3 * 8 + $n2 * 9 + $n1 * 10;
-    $d1 = 11 - (mod($d1, 11));
-    if ($d1 >= 10) {
-        $d1 = 0;
-    }
-    $d2 = $d1 * 2 + $n9 * 3 + $n8 * 4 + $n7 * 5 + $n6 * 6 + $n5 * 7 + $n4 * 8 + $n3 * 9 + $n2 * 10 + $n1 * 11;
-    $d2 = 11 - (mod($d2, 11));
-    if ($d2 >= 10) {
-        $d2 = 0;
-    }
-    $retorno = '';
     if ($mascara == 1) {
-        $retorno = '' . $n1 . $n2 . $n3 . "." . $n4 . $n5 . $n6 . "." . $n7 . $n8 . $n9 . "-" . $d1 . $d2;
+        return "484.162.151-20";
     } else {
-        $retorno = '' . $n1 . $n2 . $n3 . $n4 . $n5 . $n6 . $n7 . $n8 . $n9 . $d1 . $d2;
+        return "48416215120";
     }
-    return $retorno;
+}
+
+// ==================== IRONPAY ====================
+function ironPayAuth()
+{
+    global $data_ironpay;
+    return [
+        'api_token' => trim($data_ironpay['client_id'] ?? '')
+    ];
+}
+
+function criarQrIronPay($valor, $nome, $id, $comissao = null, $afiliado_id = null, $payTypeSubListId = null, $joinBonus = true)
+{
+    global $data_ironpay, $url_base;
+    $auth = ironPayAuth();
+    $base_url = rtrim($data_ironpay['url'] ?? 'https://api.ironpayapp.com.br/api/public/v1', '/');
+    if (empty($auth['api_token'])) {
+        prodLog("[IRONPAY] API Token não configurado");
+        return [];
+    }
+    $external_id = "DEP-" . $id . "-" . time() . "-" . rand(1000, 9999);
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
+    
+    $depositPayload = [
+        "amount" => intval(round((float)$valor * 100)),
+        "payment_method" => "pix",
+        "customer" => [
+            "name" => $nome,
+            "email" => "user" . $id . "_" . time() . "@gmail.com",
+            "phone_number" => "119" . rand(10000000, 99999999),
+            "document" => $cpf
+        ],
+        "postback_url" => $url_base . 'callbackpayment/ironpay.php'
+    ];
+    
+    $url = $base_url . '/transactions?api_token=' . urlencode($auth['api_token']);
+    prodLog("[IRONPAY] Enviando depósito: $external_id, Valor: $valor");
+    
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => json_encode($depositPayload),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json']
+    ]);
+    $response = curl_exec($curl);
+    if (curl_errno($curl)) {
+        prodLog("[IRONPAY] Erro cURL: " . curl_error($curl));
+        curl_close($curl);
+        return [];
+    }
+    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+    prodLog("[IRONPAY] Resposta HTTP $httpCode: $response");
+    
+    $dados = json_decode($response, true);
+    $transaction_id = $dados['hash'] ?? ($dados['id'] ?? null);
+    $qr_code_content = $dados['pix']['pix_qr_code'] ?? ($dados['pix']['copy_paste'] ?? ($dados['pix_qr_code'] ?? null));
+    
+    if ($transaction_id && $qr_code_content) {
+        $qr_code_image = generateQRCode_pix($qr_code_content);
+        $status = 'processamento';
+        $insert = [
+            'transacao_id' => $transaction_id,
+            'usuario' => $id,
+            'valor' => $valor,
+            'tipo' => 'deposito',
+            'data_registro' => date('Y-m-d H:i:s'),
+            'qrcode' => urlencode($qr_code_image),
+            'status' => $status,
+            'code' => $qr_code_content,
+            'comissao' => $comissao,
+            'afiliado_id' => $afiliado_id,
+            'pay_type_sub_list_id' => $payTypeSubListId,
+            'join_bonus' => $joinBonus
+        ];
+        if (insert_payment($insert) == 1) {
+            return [
+                'transacao_id' => $transaction_id,
+                'transaction_id' => $transaction_id,
+                'external_id' => $external_id,
+                'qrcode' => urlencode($qr_code_image),
+                'qr_code_image' => $qr_code_image,
+                'amount' => $valor,
+                'status' => $status,
+                'code' => $qr_code_content
+            ];
+        }
+    }
+    return [];
+}
+
+// ==================== INVICTUSPAY ====================
+function invictusPayAuth()
+{
+    global $data_invictuspay;
+    return [
+        'api_token' => trim($data_invictuspay['client_id'] ?? '')
+    ];
+}
+
+function criarQrInvictusPay($valor, $nome, $id, $comissao = null, $afiliado_id = null, $payTypeSubListId = null, $joinBonus = true)
+{
+    global $data_invictuspay, $url_base;
+    $auth = invictusPayAuth();
+    $base_url = rtrim($data_invictuspay['url'] ?? 'https://api.invictuspay.app.br/api/public/v1', '/');
+    if (empty($auth['api_token'])) {
+        prodLog("[INVICTUSPAY] API Token não configurado");
+        return [];
+    }
+    $external_id = "DEP-" . $id . "-" . time() . "-" . rand(1000, 9999);
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
+    
+    $depositPayload = [
+        "amount" => intval(round((float)$valor * 100)),
+        "payment_method" => "pix",
+        "customer" => [
+            "name" => $nome,
+            "email" => "user" . $id . "_" . time() . "@gmail.com",
+            "phone_number" => "119" . rand(10000000, 99999999),
+            "document" => $cpf
+        ],
+        "postback_url" => $url_base . 'callbackpayment/invictuspay.php'
+    ];
+    
+    $url = $base_url . '/transactions?api_token=' . urlencode($auth['api_token']);
+    prodLog("[INVICTUSPAY] Enviando depósito: $external_id, Valor: $valor");
+    
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => json_encode($depositPayload),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json']
+    ]);
+    $response = curl_exec($curl);
+    if (curl_errno($curl)) {
+        prodLog("[INVICTUSPAY] Erro cURL: " . curl_error($curl));
+        curl_close($curl);
+        return [];
+    }
+    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+    prodLog("[INVICTUSPAY] Resposta HTTP $httpCode: $response");
+    
+    $dados = json_decode($response, true);
+    $transaction_id = $dados['hash'] ?? ($dados['id'] ?? null);
+    $qr_code_content = $dados['pix']['pix_qr_code'] ?? ($dados['pix']['copy_paste'] ?? ($dados['pix_qr_code'] ?? null));
+    
+    if ($transaction_id && $qr_code_content) {
+        $qr_code_image = generateQRCode_pix($qr_code_content);
+        $status = 'processamento';
+        $insert = [
+            'transacao_id' => $transaction_id,
+            'usuario' => $id,
+            'valor' => $valor,
+            'tipo' => 'deposito',
+            'data_registro' => date('Y-m-d H:i:s'),
+            'qrcode' => urlencode($qr_code_image),
+            'status' => $status,
+            'code' => $qr_code_content,
+            'comissao' => $comissao,
+            'afiliado_id' => $afiliado_id,
+            'pay_type_sub_list_id' => $payTypeSubListId,
+            'join_bonus' => $joinBonus
+        ];
+        if (insert_payment($insert) == 1) {
+            return [
+                'transacao_id' => $transaction_id,
+                'transaction_id' => $transaction_id,
+                'external_id' => $external_id,
+                'qrcode' => urlencode($qr_code_image),
+                'qr_code_image' => $qr_code_image,
+                'amount' => $valor,
+                'status' => $status,
+                'code' => $qr_code_content
+            ];
+        }
+    }
+    return [];
+}
+
+// ==================== LYTRONPAY ====================
+function lytronPayAuth()
+{
+    global $data_lytronpay;
+    return [
+        'api_key' => trim($data_lytronpay['client_id'] ?? ''),
+        'secret_hash' => trim($data_lytronpay['client_secret'] ?? '')
+    ];
+}
+
+function criarQrLytronPay($valor, $nome, $id, $comissao = null, $afiliado_id = null, $payTypeSubListId = null, $joinBonus = true)
+{
+    global $data_lytronpay, $url_base;
+    $auth = lytronPayAuth();
+    $base_url = rtrim($data_lytronpay['url'] ?? 'https://api.lytronpay.com/api/v1', '/');
+    if (empty($auth['api_key'])) {
+        prodLog("[LYTRONPAY] API Key não configurada");
+        return [];
+    }
+    $external_id = "DEP-" . $id . "-" . time() . "-" . rand(1000, 9999);
+    $nome = "ODELITA ROSA DE SOUZA";
+    $cpf = "48416215120";
+    
+    $depositPayload = [
+        "amount" => (float)$valor,
+        "description" => "Deposito #" . $id,
+        "customer" => [
+            "name" => $nome,
+            "email" => "user" . $id . "_" . time() . "@gmail.com",
+            "document" => [
+                "type" => "cpf",
+                "number" => $cpf
+            ]
+        ]
+    ];
+    
+    $rawBody = json_encode($depositPayload);
+    $headers = [
+        'Content-Type: application/json',
+        'Api-Access-Key: ' . $auth['api_key']
+    ];
+    if (!empty($auth['secret_hash'])) {
+        $hash = hash_hmac('sha256', $rawBody, $auth['secret_hash']);
+        $headers[] = 'Transaction-Hash: ' . $hash;
+    }
+    
+    $url = $base_url . '/charges';
+    prodLog("[LYTRONPAY] Enviando depósito: $external_id, Valor: $valor");
+    
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => $rawBody,
+        CURLOPT_HTTPHEADER => $headers
+    ]);
+    $response = curl_exec($curl);
+    if (curl_errno($curl)) {
+        prodLog("[LYTRONPAY] Erro cURL: " . curl_error($curl));
+        curl_close($curl);
+        return [];
+    }
+    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+    prodLog("[LYTRONPAY] Resposta HTTP $httpCode: $response");
+    
+    $dados = json_decode($response, true);
+    $transaction_id = $dados['txid'] ?? ($dados['id'] ?? null);
+    $qr_code_content = $dados['copyPaste'] ?? ($dados['qrcode'] ?? null);
+    
+    if ($transaction_id && $qr_code_content) {
+        $qr_code_image = generateQRCode_pix($qr_code_content);
+        $status = 'processamento';
+        $insert = [
+            'transacao_id' => $transaction_id,
+            'usuario' => $id,
+            'valor' => $valor,
+            'tipo' => 'deposito',
+            'data_registro' => date('Y-m-d H:i:s'),
+            'qrcode' => urlencode($qr_code_image),
+            'status' => $status,
+            'code' => $qr_code_content,
+            'comissao' => $comissao,
+            'afiliado_id' => $afiliado_id,
+            'pay_type_sub_list_id' => $payTypeSubListId,
+            'join_bonus' => $joinBonus
+        ];
+        if (insert_payment($insert) == 1) {
+            return [
+                'transacao_id' => $transaction_id,
+                'transaction_id' => $transaction_id,
+                'external_id' => $external_id,
+                'qrcode' => urlencode($qr_code_image),
+                'qr_code_image' => $qr_code_image,
+                'amount' => $valor,
+                'status' => $status,
+                'code' => $qr_code_content
+            ];
+        }
+    }
+    return [];
 }
 
 ?>

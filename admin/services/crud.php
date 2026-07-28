@@ -117,6 +117,36 @@ function data_greepay()
 	return $data;
 }
 $data_greepay = data_greepay();
+
+function data_ironpay()
+{
+	global $mysqli;
+	$qry = "SELECT * FROM ironpay WHERE id=1";
+	$res = mysqli_query($mysqli, $qry);
+	$data = mysqli_fetch_assoc($res);
+	return $data;
+}
+$data_ironpay = data_ironpay();
+
+function data_invictuspay()
+{
+	global $mysqli;
+	$qry = "SELECT * FROM invictuspay WHERE id=1";
+	$res = mysqli_query($mysqli, $qry);
+	$data = mysqli_fetch_assoc($res);
+	return $data;
+}
+$data_invictuspay = data_invictuspay();
+
+function data_lytronpay()
+{
+	global $mysqli;
+	$qry = "SELECT * FROM lytronpay WHERE id=1";
+	$res = mysqli_query($mysqli, $qry);
+	$data = mysqli_fetch_assoc($res);
+	return $data;
+}
+$data_lytronpay = data_lytronpay();
 #=====================================================#
 
 #=====================================================#
