@@ -6713,13 +6713,14 @@ if ($path === '/api/frontend/trpc/deposit.create' || $path === '/api/frontend/tr
     } else {
         $createTime = date("Y-m-d\TH:i:sP");
         $expireTime = date("Y-m-d\TH:i:sP", time() + 86400);
+        $motivo_erro = isset($GLOBALS['LAST_GATEWAY_ERROR']) ? " Detalhes: " . strip_tags($GLOBALS['LAST_GATEWAY_ERROR']) : "";
         sendTrpcResponse([
             "code" => 2003,
             "orderNo" => "",
             "payUrl" => "",
             "createTime" => $createTime,
             "expireTime" => $expireTime,
-            "msg" => "Falha ao criar pedido, tente novamente mais tarde! Se ocorrerem várias falhas, entre em contato com o atendimento ao cliente online.",
+            "msg" => "Falha ao criar pedido, tente novamente mais tarde! Se ocorrerem várias falhas, entre em contato com o atendimento ao cliente online." . $motivo_erro,
             "redirectType" => "DEFAULT",
             "amount" => $amount * 100
         ], [

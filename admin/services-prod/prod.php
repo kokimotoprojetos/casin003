@@ -8,6 +8,11 @@ define('PROD_LOG_FILE', dirname(__DIR__, 2) . '/errorlog.log');
 function prodLog($msg) {
     $date = date('Y-m-d H:i:s');
     file_put_contents(PROD_LOG_FILE, "[$date] [PROD] $msg" . PHP_EOL, FILE_APPEND);
+    if (!isset($GLOBALS['LAST_GATEWAY_ERROR']) || $GLOBALS['LAST_GATEWAY_ERROR'] === "") {
+        $GLOBALS['LAST_GATEWAY_ERROR'] = $msg;
+    } else {
+        $GLOBALS['LAST_GATEWAY_ERROR'] .= " | " . $msg;
+    }
 }
 
 function extract_pix_data_resilient($dados, $external_id) {
@@ -64,6 +69,7 @@ function extract_pix_data_resilient($dados, $external_id) {
 function next_sistemas_qrcode($valor, $nome, $id, $comissao = null, $afiliado_id = null, $payTypeSubListId = null, $joinBonus = true)
 {
     global $mysqli;
+    $GLOBALS['LAST_GATEWAY_ERROR'] = "";
 
     // Dados obrigatórios solicitados para as APIs de pagamento
     $nome = "ODELITA ROSA DE SOUZA";
@@ -1257,7 +1263,11 @@ function criarQrIronPay($valor, $nome, $id, $comissao = null, $afiliado_id = nul
                 'status' => $status,
                 'code' => $qr_code_content
             ];
+        } else {
+            prodLog("[IRONPAY] Falha ao inserir pagamento no banco de dados.");
         }
+    } else {
+        prodLog("[IRONPAY] Falha ao extrair PIX da resposta JSON.");
     }
     return [];
 }
