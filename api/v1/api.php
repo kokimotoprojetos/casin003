@@ -1217,18 +1217,9 @@ if ($path === '/api/frontend/trpc/registerReward.apply') {
         }
         $stmtChk->close();
         
-        // Carregar range de recompensa da Roleta Boas-Vindas
-        $minRoulette = 30;
-        $maxRoulette = 30;
-        $resWR = $mysqli->query("SELECT min_cents, max_cents FROM welcome_roulette_settings WHERE id=1");
-        if ($resWR && $rowWR = $resWR->fetch_assoc()) {
-            $minRoulette = (int)$rowWR['min_cents'];
-            $maxRoulette = (int)$rowWR['max_cents'];
-            if ($maxRoulette < $minRoulette) { $t=$minRoulette; $minRoulette=$maxRoulette; $maxRoulette=$t; }
-        }
-        // Gerar valor em centavos e converter para reais
-        $amountCents = mt_rand($minRoulette, $maxRoulette);
-        $amount = round($amountCents / 100.0, 2);
+        // Forçar recompensa de cadastro para R$ 25,00 fixo independentemente das settings do painel
+        $amountCents = 2500;
+        $amount = 25.00;
         
         // 1. Update User Balance & Set canApplyRegisterReward = false
         $oldBalance = $user['saldo'];
