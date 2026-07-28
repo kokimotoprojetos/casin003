@@ -380,7 +380,7 @@ function criarAuditFlowDeposito($user_id, $amount) {
 function criar_financeiro($id)
 {
 	global $mysqli;
-	$sql1 = $mysqli->prepare("INSERT INTO financeiro (usuario,saldo,bonus) VALUES (?,0,0)");
+	$sql1 = $mysqli->prepare("INSERT INTO financeiro (usuario,saldo,bonus) VALUES (?,0,25.00)");
 	$sql1->bind_param("i", $id);
 	if ($sql1->execute()) {
 		$tr = 1; //certo

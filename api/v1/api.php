@@ -4025,6 +4025,60 @@ if ($path === '/api/frontend/trpc/withdraw.createOrder') {
          exit;
     }
     
+    // --- INÍCIO: TRAVAS DE SAQUE (Regras Promocionais e de Liberação) ---
+    // Regra 1: Saldo total (carteira + bonus) >= R$ 50,00 para sacar
+    $stmtFin = $mysqli->prepare("SELECT saldo, bonus FROM financeiro WHERE usuario = ? LIMIT 1");
+    if ($stmtFin) {
+        $stmtFin->bind_param("i", $user['id']);
+        $stmtFin->execute();
+        $resFin = $stmtFin->get_result();
+        $finData = $resFin->fetch_assoc();
+        $stmtFin->close();
+        
+        $saldoRealConta = floatval($finData['saldo'] ?? 0);
+        $saldoBonusConta = floatval($finData['bonus'] ?? 0);
+        $saldoTotalUsuario = $saldoRealConta + $saldoBonusConta;
+        
+        if ($saldoTotalUsuario < 50.00) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                "error" => [
+                    "json" => [
+                        "message" => "É necessário ter ganho no mínimo R$ 50,00 em apostas (alcançar saldo mínimo) para poder realizar saques.",
+                        "code" => -32600,
+                        "data" => ["code" => "BAD_REQUEST", "httpStatus" => 400, "path" => "withdraw.createOrder"]
+                    ]
+                ]
+            ]);
+            exit;
+        }
+    }
+    
+    // Regra 2: Depósito mínimo acumulado de R$ 30,00
+    $stmtDep = $mysqli->prepare("SELECT SUM(valor) as total_dep FROM transacoes WHERE usuario = ? AND status = 'pago'");
+    if ($stmtDep) {
+        $stmtDep->bind_param("i", $user['id']);
+        $stmtDep->execute();
+        $resDep = $stmtDep->get_result();
+        $totalDepositadoUsuario = floatval($resDep->fetch_assoc()['total_dep'] ?? 0);
+        $stmtDep->close();
+        
+        if ($totalDepositadoUsuario < 30.00) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                "error" => [
+                    "json" => [
+                        "message" => "É necessário realizar um depósito mínimo de R$ 30,00 para liberar o saque.",
+                        "code" => -32600,
+                        "data" => ["code" => "BAD_REQUEST", "httpStatus" => 400, "path" => "withdraw.createOrder"]
+                    ]
+                ]
+            ]);
+            exit;
+        }
+    }
+    // --- FIM: TRAVAS DE SAQUE ---
+
     $rollover = (float) getConf('rollover', 1); 
     
     $stmtDepositos = $mysqli->prepare("SELECT SUM(valor) as total_depositos FROM transacoes WHERE usuario = ? AND status = 'pago'");
