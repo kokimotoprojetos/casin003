@@ -3225,7 +3225,7 @@ if ($path === '/api/frontend/trpc/reward.list') {
     if ($user) {
         $userId = $user['id'];
         
-        $stmtCheck = $mysqli->prepare("SELECT id FROM red_pocket_rewards WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 28 HOUR)");
+        $stmtCheck = $mysqli->prepare("SELECT id FROM red_pocket_rewards WHERE user_id = ? AND (DATE(created_at) = CURDATE() OR created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR))");
         $stmtCheck->bind_param("i", $userId);
         $stmtCheck->execute();
         $stmtCheck->store_result();
@@ -3297,7 +3297,7 @@ if (strpos($path, '/reward.receive') !== false) {
 
     if ($user) {
         $userId = $user['id'];
-        $stmtInterval = $mysqli->prepare("SELECT id FROM red_pocket_rewards WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 28 HOUR)");
+        $stmtInterval = $mysqli->prepare("SELECT id FROM red_pocket_rewards WHERE user_id = ? AND (DATE(created_at) = CURDATE() OR created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR))");
         $stmtInterval->bind_param("i", $userId);
         $stmtInterval->execute();
         $stmtInterval->store_result();
