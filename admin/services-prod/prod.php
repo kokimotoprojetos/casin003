@@ -1046,65 +1046,77 @@ function insert_payment($insert)
     global $mysqli;
     $dataarray = $insert;
     
-    prodLog("insert_payment: Iniciando inserção. Dados: " . json_encode($insert));
+    prodLog("insert_payment: Iniciando inserção.");
     
-    $columns = "transacao_id,usuario,valor,tipo,data_registro,qrcode,code,status";
-    $placeholders = "?,?,?,?,?,?,?,?";
-    $types = "ssssssss";
-    $values = [
-        $dataarray['transacao_id'], 
-        $dataarray['usuario'], 
-        $dataarray['valor'], 
-        $dataarray['tipo'], 
-        $dataarray['data_registro'], 
-        $dataarray['qrcode'], 
-        $dataarray['code'], 
-        $dataarray['status']
-    ];
-    
-    // Se houver comissão e afiliado_id, adicionar às colunas
-    if (isset($dataarray['comissao']) && isset($dataarray['afiliado_id'])) {
-        $columns .= ",comissao,afiliado_id";
-        $placeholders .= ",?,?";
-        $types .= "ss";
-        $values[] = $dataarray['comissao'];
-        $values[] = $dataarray['afiliado_id'];
-    }
-
-    // Se houver pay_type_sub_list_id, adicionar
-    if (isset($dataarray['pay_type_sub_list_id']) && !empty($dataarray['pay_type_sub_list_id'])) {
-        $columns .= ",pay_type_sub_list_id";
-        $placeholders .= ",?";
-        $types .= "i";
-        $values[] = $dataarray['pay_type_sub_list_id'];
-    }
-
-    // Se houver join_bonus, adicionar
-    if (isset($dataarray['join_bonus'])) {
-        $columns .= ",join_bonus";
-        $placeholders .= ",?";
-        $types .= "i";
-        $values[] = $dataarray['join_bonus'];
-    }
-    
-    $sql = "INSERT INTO transacoes ($columns) VALUES ($placeholders)";
-    prodLog("insert_payment: SQL: $sql");
-    $stmt = $mysqli->prepare($sql);
-    
-    if ($stmt) {
-        $stmt->bind_param($types, ...$values);
+    try {
+        // Contorno automático de banco sem auto_increment no id:
+        $res = $mysqli->query("SELECT MAX(id) as maxid FROM transacoes");
+        $row = $res ? $res->fetch_assoc() : null;
+        $next_id = ($row && isset($row['maxid'])) ? intval($row['maxid']) + 1 : 1;
         
-        if ($stmt->execute()) {
-            $stmt->close();
-            prodLog("insert_payment: Sucesso na inserção.");
-            return 1;
+        $columns = "id,transacao_id,usuario,valor,tipo,data_registro,qrcode,code,status";
+        $placeholders = "?,?,?,?,?,?,?,?,?";
+        $types = "issssssss";
+        $values = [
+            $next_id,
+            $dataarray['transacao_id'], 
+            $dataarray['usuario'], 
+            $dataarray['valor'], 
+            $dataarray['tipo'], 
+            $dataarray['data_registro'], 
+            $dataarray['qrcode'], 
+            $dataarray['code'], 
+            $dataarray['status']
+        ];
+        
+        // Se houver comissão e afiliado_id
+        if (isset($dataarray['comissao']) && isset($dataarray['afiliado_id'])) {
+            $columns .= ",comissao,afiliado_id";
+            $placeholders .= ",?,?";
+            $types .= "ss";
+            $values[] = $dataarray['comissao'];
+            $values[] = $dataarray['afiliado_id'];
+        }
+    
+        // Se houver pay_type_sub_list_id
+        if (isset($dataarray['pay_type_sub_list_id']) && !empty($dataarray['pay_type_sub_list_id'])) {
+            $columns .= ",pay_type_sub_list_id";
+            $placeholders .= ",?";
+            $types .= "i";
+            $values[] = $dataarray['pay_type_sub_list_id'];
+        }
+    
+        // Se houver join_bonus
+        if (isset($dataarray['join_bonus'])) {
+            $columns .= ",join_bonus";
+            $placeholders .= ",?";
+            $types .= "i";
+            $values[] = $dataarray['join_bonus'];
+        }
+        
+        $sql = "INSERT INTO transacoes ($columns) VALUES ($placeholders)";
+        $stmt = $mysqli->prepare($sql);
+        
+        if ($stmt) {
+            $stmt->bind_param($types, ...$values);
+            if ($stmt->execute()) {
+                $stmt->close();
+                prodLog("insert_payment: Sucesso.");
+                return 1;
+            } else {
+                prodLog("insert_payment: ERRO Execute: " . $stmt->error);
+                $stmt->close();
+                return 0;
+            }
         } else {
-            prodLog("insert_payment: ERRO Execute: " . $stmt->error);
-            $stmt->close();
+            prodLog("insert_payment: ERRO Prepare: " . $mysqli->error);
             return 0;
         }
-    } else {
-        prodLog("insert_payment: ERRO Prepare: " . $mysqli->error);
+    } catch (Exception $e) {
+        prodLog("insert_payment EXCEPTION: " . $e->getMessage());
+        return 0;
+    } catch (Error $e) {
+        prodLog("insert_payment FATAL: " . $e->getMessage());
         return 0;
     }
 }
