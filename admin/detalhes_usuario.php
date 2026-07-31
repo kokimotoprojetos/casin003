@@ -1344,6 +1344,7 @@ include_once "validar_2fa.php";
             function editarSaldoUsuario(userId, adicionar, remover) {
                 fetch('fetch/editar_saldo.php', {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -1353,7 +1354,12 @@ include_once "validar_2fa.php";
                             remover: remover
                         })
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(t => { throw new Error(t || 'Erro do servidor'); });
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             showToast('success', 'Saldo atualizado com sucesso!');
@@ -1361,11 +1367,11 @@ include_once "validar_2fa.php";
                                 location.reload();
                             }, 3000);
                         } else {
-                            showToast('danger', 'Erro: ' + data.message);
+                            showToast('danger', 'Erro: ' + (data.message || 'Erro desconhecido'));
                         }
                     })
                     .catch(error => {
-                        showToast('danger', 'Erro ao atualizar o saldo.');
+                        showToast('danger', 'Erro ao atualizar o saldo: ' + error.message);
                     });
             }
         </script>
