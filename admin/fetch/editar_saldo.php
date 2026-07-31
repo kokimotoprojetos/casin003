@@ -4,9 +4,9 @@ if (file_exists('../../vercel_session.php')) {
 }
 session_start();
 
-include '../services/database.php';
-include '../services/crud.php';
-include_once '../services/funcao.php';
+include __DIR__ . '/../services/database.php';
+include __DIR__ . '/../services/crud.php';
+include_once __DIR__ . '/../services/funcao.php';
 
 if (!isset($_SESSION['token_adm_encrypted']) || !isset($_SESSION["crsf_token_adm"]) || !isset($_SESSION["anti_crsf_token_adm"])) {
     echo json_encode(['success' => false, 'message' => 'Sessão expirada. Faça login novamente.']);
