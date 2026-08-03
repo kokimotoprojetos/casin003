@@ -12,7 +12,47 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', 'test-launch') !== false || isset($_GE
     require_once __DIR__ . '/../config.php';
     require_once __DIR__ . '/../admin/services/database.php';
     require_once __DIR__ . '/../admin/services/crud.php';
-    $res = pegarLinkJogoApiPlayFiver('PGSOFT', 'fortune-tiger', 'testekoki@email.com', 100);
+    $gameId = $_GET['id'] ?? null;
+    $provider = $_GET['provider'] ?? 'PGSOFT';
+    $gameCode = $_GET['game'] ?? 'fortune-tiger';
+    $email = $_GET['email'] ?? 'testekoki@email.com';
+    $saldo = floatval($_GET['saldo'] ?? 100);
+    if ($gameId) {
+        $stmt = $mysqli->prepare("SELECT game_code, provider, api, game_name FROM games WHERE id = ?");
+        $stmt->bind_param('s', $gameId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            $provider = $row['provider'];
+            $gameCode = $row['game_code'];
+            $api = strtolower(trim($row['api']));
+            $gameName = $row['game_name'];
+            $res2 = null;
+            if ($api === 'playfiver') {
+                $res2 = pegarLinkJogoApiPlayFiver($provider, $gameCode, $email, $saldo);
+            } elseif ($api === 'pgclone') {
+                $res2 = pegarLinkJogoPGClone($provider, $gameCode, $email, $saldo);
+            } elseif ($api === 'ppclone') {
+                $res2 = pegarLinkJogoPPClone($provider, $gameCode, $email, $saldo);
+            } else {
+                $res2 = pegarLinkJogoigamewin($provider, $gameCode, $email);
+            }
+            echo json_encode([
+                'game_id' => $gameId,
+                'game_name' => $gameName,
+                'game_code' => $gameCode,
+                'provider' => $provider,
+                'api' => $row['api'],
+                'launch_result' => $res2,
+            ], JSON_PRETTY_PRINT);
+            $stmt->close();
+            exit;
+        }
+        $stmt->close();
+        echo json_encode(['error' => 'Game not found', 'game_id' => $gameId]);
+        exit;
+    }
+    $res = pegarLinkJogoApiPlayFiver($provider, $gameCode, $email, $saldo);
     echo json_encode(['result' => $res]);
     exit;
 }
