@@ -27,8 +27,34 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', 'pfiver-diag') !== false || isset($_GE
     if ($proxy !== '') {
         $proxyMasked = preg_replace('/(:\/\/)([^:]+):([^@]+)@/', '$1***:***@', $proxy);
     }
-    $ipEcho = enviarRequestPlayFiver('https://api.ipify.org?format=json', json_encode(['x' => 1]), $proxy);
-    $ipData = json_decode($ipEcho, true);
+    $ipSeen = null;
+    $ipRaw = null;
+    $proxyError = null;
+    if ($proxy !== '') {
+        $chDiag = curl_init('https://ipinfo.io/ip');
+        curl_setopt($chDiag, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($chDiag, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($chDiag, CURLOPT_TIMEOUT, 15);
+        curl_setopt($chDiag, CURLOPT_HTTPGET, true);
+        curl_setopt($chDiag, CURLOPT_USERAGENT, 'Mozilla/5.0');
+        if (strpos($proxy, '://') !== false) {
+            curl_setopt($chDiag, CURLOPT_PROXY, $proxy);
+        } elseif (strpos($proxy, '@') !== false) {
+            list($auth, $hostport) = explode('@', $proxy, 2);
+            curl_setopt($chDiag, CURLOPT_PROXY, $hostport);
+            curl_setopt($chDiag, CURLOPT_PROXYUSERPWD, $auth);
+        } else {
+            curl_setopt($chDiag, CURLOPT_PROXY, $proxy);
+        }
+        $ipRaw = curl_exec($chDiag);
+        if ($ipRaw === false) {
+            $proxyError = curl_error($chDiag);
+        } else {
+            $ipSeen = trim($ipRaw);
+        }
+        curl_close($chDiag);
+    }
+    $vercelIp = @file_get_contents('https://ipinfo.io/ip');
     echo json_encode([
         'ativo' => isset($cfg['ativo']) ? intval($cfg['ativo']) : null,
         'proxy_configured' => $proxy !== '',
@@ -37,8 +63,10 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', 'pfiver-diag') !== false || isset($_GE
         'agent_token_set' => !empty(trim($cfg['agent_token'] ?? '')),
         'agent_secret_set' => !empty(trim($cfg['agent_secret'] ?? '')),
         'url_set' => !empty(trim($cfg['url'] ?? '')),
-        'ip_seen_by_playfiver' => $ipData['ip'] ?? null,
-        'ip_echo_raw' => $ipEcho,
+        'ip_seen_by_playfiver_via_proxy' => $ipSeen,
+        'ip_echo_raw' => $ipRaw,
+        'proxy_error' => $proxyError,
+        'vercel_real_ip' => $vercelIp,
     ], JSON_PRETTY_PRINT);
     exit;
 }
