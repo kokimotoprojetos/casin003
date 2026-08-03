@@ -1,7 +1,7 @@
 <?php include 'partials/html.php' ?>
 
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 session_start();
 include_once "services/database.php";
@@ -50,6 +50,7 @@ function update_signin_config($id, $data)
         valid_bet = ?, 
         extra_reward = ?
         WHERE id = ?");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "idddddi",
@@ -70,6 +71,7 @@ function get_signin_records($limit = 50, $offset = 0)
     global $mysqli;
     $qry = "SELECT * FROM signin_records ORDER BY date_record DESC LIMIT ? OFFSET ?";
     $stmt = $mysqli->prepare($qry);
+    if (!$stmt) return false;
     $stmt->bind_param("ii", $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -84,6 +86,7 @@ function delete_signin_record($id)
 {
     global $mysqli;
     $qry = $mysqli->prepare("DELETE FROM signin_records WHERE id = ?");
+    if (!$qry) return false;
     $qry->bind_param("i", $id);
     return $qry->execute();
 }
@@ -134,7 +137,8 @@ $recordsList = get_signin_records($limit, $offset);
 
 // Contar total de registros para paginação
 $totalRecordsResult = $mysqli->query("SELECT COUNT(*) as total FROM signin_records");
-$totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+$row = $totalRecordsResult ? $totalRecordsResult->fetch_assoc() : null;
+$totalRecords = $row ? (int)$row['total'] : 0;
 $totalPages = ceil($totalRecords / $limit);
 
 ?>
@@ -184,6 +188,7 @@ $totalPages = ceil($totalRecords / $limit);
                                     <!-- Aba Configuração -->
                                     <div class="tab-pane fade show active" id="config" role="tabpanel" aria-labelledby="config-tab">
                                         <form method="POST" action="">
+                                            <?php $csrf->echoInputField(); ?>
                                             <input type="hidden" name="action" value="update_config">
                                             <div class="table-responsive">
                                                 <table class="table table-bordered table-striped">
@@ -255,6 +260,7 @@ $totalPages = ceil($totalRecords / $limit);
                                                             <td><?= date('d/m/Y H:i:s', strtotime($record['date_record'])) ?></td>
                                                             <td>
                                                                 <form method="POST" action="" onsubmit="return confirm('<?= admin_t('checklist_confirm_delete') ?>');">
+                                                                    <?php $csrf->echoInputField(); ?>
                                                                     <input type="hidden" name="action" value="delete_record">
                                                                     <input type="hidden" name="record_id" value="<?= $record['id'] ?>">
                                                                     <button type="submit" class="btn btn-sm btn-danger"><i class="iconoir-trash"></i> <?= admin_t('button_delete') ?></button>

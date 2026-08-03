@@ -100,7 +100,10 @@ try {
     echo json_encode(['success' => true, 'message' => 'Saldo atualizado com sucesso.']);
 } catch (Exception $e) {
     $mysqli->rollback();
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    // Adiciona o erro nativo do mysql se houver
+    $mysql_err = isset($stmtLog) ? $stmtLog->error : (isset($stmt) ? $stmt->error : $mysqli->error);
+    $extra = $mysql_err ? " (Detalhes: " . $mysql_err . ")" : "";
+    echo json_encode(['success' => false, 'message' => $e->getMessage() . $extra]);
 }
 
 $mysqli->close();

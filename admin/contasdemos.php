@@ -217,11 +217,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['criar_contas'])) {
         header('Location: ' . $_SERVER['PHP_SELF']);
         exit;
     } catch (\Throwable $e) {
-        http_response_code(500);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo "FATAL: " . $e->getMessage() . "\n";
-        echo "Arquivo: " . $e->getFile() . ":" . $e->getLine() . "\n\n";
-        echo $e->getTraceAsString();
+        error_log("contasdemos fatal: " . $e->getMessage() . " em " . $e->getFile() . ":" . $e->getLine());
+        $_SESSION['toast_type'] = 'error';
+        $_SESSION['toast_message'] = 'Erro interno ao processar contas demo.';
+        header('Location: ' . $_SERVER['PHP_SELF']);
         exit;
     }
 }
@@ -273,6 +272,7 @@ while ($row = mysqli_fetch_assoc($contas_demo_result)) {
                             </div>
                             <div class="card-body">
                                 <form method="POST">
+                                    <?php $csrf->echoInputField(); ?>
                                     <input type="hidden" name="criar_contas" value="1">
                                     
                                     <div class="row mb-3">
@@ -500,6 +500,6 @@ while ($row = mysqli_fetch_assoc($contas_demo_result)) {
         }
     </script>
 
-    <?php include 'partials/scripts.php' ?>
+    <?php include 'partials/vendorjs.php' ?>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 <?php
 
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error.log');
@@ -707,7 +707,7 @@ body{
                                                     ?>
                                             <tr>
                                                 <td><?= $data['id']; ?></td>
-                                                <td><?= $data_return['mobile']; ?></td>
+                                                <td><?= $data_return['mobile'] ?? '—'; ?></td>
                                                 <td><?= ver_data($data['data_registro']); ?></td>
                                                 <td>R$ <?= Reais2($data['valor']); ?></td>
                                             </tr>

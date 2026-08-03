@@ -80,7 +80,8 @@ function count_games($search = '', $filter_api = '', $filter_provider = '')
     
     $qry = "SELECT COUNT(*) as total FROM games WHERE $where_clause";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 function add_game($data)
@@ -88,6 +89,7 @@ function add_game($data)
     global $mysqli;
     
     $qry = $mysqli->prepare("INSERT INTO games (game_name, game_code, banner, provider, type, game_type, api, status, popular) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$qry) return false;
     
     $qry->bind_param(
         "sssssssii",
@@ -120,6 +122,7 @@ function update_game($data)
         status = ?,
         popular = ?
         WHERE id = ?");
+    if (!$qry) return false;
     
     $qry->bind_param(
         "ssssssssii",
@@ -142,6 +145,7 @@ function delete_game($id)
 {
     global $mysqli;
     $qry = $mysqli->prepare("DELETE FROM games WHERE id = ?");
+    if (!$qry) return false;
     $qry->bind_param("i", $id);
     return $qry->execute();
 }
@@ -153,7 +157,7 @@ function get_providers()
     $qry = "SELECT DISTINCT provider FROM games WHERE (api = 'PGClone' OR api = 'iGameWin' OR api = 'PPClone' OR api = 'Drakon' OR api = 'PlayFiver') AND provider IS NOT NULL AND provider != '' ORDER BY provider ASC";
     $result = mysqli_query($mysqli, $qry);
     $providers = [];
-    while ($row = mysqli_fetch_assoc($result)) {
+    while ($result && ($row = mysqli_fetch_assoc($result))) {
         $providers[] = $row['provider'];
     }
     return $providers;
@@ -377,6 +381,7 @@ $providers = get_providers();
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                         </div>
                                                         <form method="POST">
+                                                            <?php $csrf->echoInputField(); ?>
                                                             <div class="modal-body">
                                                                 <input type="hidden" name="update_game" value="1">
                                                                 <input type="hidden" name="game_id" value="<?= $game['id'] ?>">
@@ -543,6 +548,7 @@ $providers = get_providers();
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST">
+                    <?php $csrf->echoInputField(); ?>
                     <div class="modal-body">
                         <input type="hidden" name="add_game" value="1">
                         
@@ -626,6 +632,7 @@ $providers = get_providers();
 
     <!-- Form oculto para delete -->
     <form id="deleteForm" method="POST" style="display: none;">
+        <?php $csrf->echoInputField(); ?>
         <input type="hidden" name="delete_game" value="1">
         <input type="hidden" name="game_id" id="deleteGameId">
     </form>

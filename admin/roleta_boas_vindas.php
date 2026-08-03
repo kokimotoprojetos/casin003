@@ -36,6 +36,7 @@ function rw_save($mysqli, $data){
     $audit = (float)str_replace(',', '.', $data['audit_multiple']);
     if ($min > $max){ $t=$min; $min=$max; $max=$t; }
     $stmt = $mysqli->prepare("UPDATE welcome_roulette_settings SET min_cents=?, max_cents=?, audit_multiple=? WHERE id=1");
+    if (!$stmt) return false;
     $stmt->bind_param("iid", $min, $max, $audit);
     $ok = $stmt->execute();
     $stmt->close();
@@ -75,6 +76,7 @@ $cfg = rw_get($mysqli);
                                 <div class="alert alert-<?= $msg['type'] ?>"><?= htmlspecialchars($msg['text']) ?></div>
                             <?php endif; ?>
                             <form method="post">
+                                <?php $csrf->echoInputField(); ?>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Recompensa Mínima (centavos)</label>

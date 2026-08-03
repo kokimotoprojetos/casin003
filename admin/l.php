@@ -1,4 +1,8 @@
 <?php
+if (!defined('ADMIN_OB_STARTED') && !headers_sent()) {
+    define('ADMIN_OB_STARTED', true);
+    ob_start();
+}
 $admin_lang_allowed = ['pt-BR','en-US','es-ES','zh-CN'];
 $admin_lang = 'pt-BR';
 if (isset($_COOKIE['admin_lang']) && in_array($_COOKIE['admin_lang'], $admin_lang_allowed, true)) {

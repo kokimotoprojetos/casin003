@@ -60,10 +60,13 @@ function validar_2fa_admin($codigo_2fa)
     $admin_id = $_SESSION['data_adm']['id'];
     
     $qry = $mysqli->prepare("SELECT 2fa FROM admin_users WHERE id = ?");
+    if (!$qry) {
+        return false;
+    }
     $qry->bind_param("i", $admin_id);
     $qry->execute();
     $result = $qry->get_result();
-    $admin = $result->fetch_assoc();
+    $admin = $result ? $result->fetch_assoc() : null;
     
     if ($admin && password_verify($codigo_2fa, $admin['2fa'])) {
         return true;
@@ -76,12 +79,15 @@ function update_admin($data)
     global $mysqli;
 
     $qry_check = $mysqli->prepare("SELECT email FROM admin_users WHERE id = ?");
+    if (!$qry_check) {
+        return false;
+    }
     $qry_check->bind_param("i", $data['id']);
     $qry_check->execute();
     $result_check = $qry_check->get_result();
-    $admin_check = $result_check->fetch_assoc();
+    $admin_check = $result_check ? $result_check->fetch_assoc() : null;
     
-    if (!pode_editar_admin($admin_check['email'])) {
+    if (!$admin_check || !pode_editar_admin($admin_check['email'])) {
         return false;
     }
 
@@ -98,6 +104,7 @@ function update_admin($data)
 
     if ($atualizar_senha && $atualizar_2fa) {
         $qry = $mysqli->prepare("UPDATE admin_users SET nome = ?, email = ?, nivel = ?, status = ?, senha = ?, 2fa = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param(
             "ssisssi",
             $data['nome'],
@@ -110,6 +117,7 @@ function update_admin($data)
         );
     } elseif ($atualizar_senha && !$atualizar_2fa) {
         $qry = $mysqli->prepare("UPDATE admin_users SET nome = ?, email = ?, nivel = ?, status = ?, senha = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param(
             "ssissi",
             $data['nome'],
@@ -121,6 +129,7 @@ function update_admin($data)
         );
     } elseif (!$atualizar_senha && $atualizar_2fa) {
         $qry = $mysqli->prepare("UPDATE admin_users SET nome = ?, email = ?, nivel = ?, status = ?, 2fa = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param(
             "ssissi",
             $data['nome'],
@@ -132,6 +141,7 @@ function update_admin($data)
         );
     } else {
         $qry = $mysqli->prepare("UPDATE admin_users SET nome = ?, email = ?, nivel = ?, status = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param(
             "ssisi",
             $data['nome'],
@@ -152,6 +162,7 @@ function add_admin($data)
     $twofa_hash = password_hash($data['2fa'], PASSWORD_DEFAULT, array("cost" => 10));
     
     $qry = $mysqli->prepare("INSERT INTO admin_users (nome, email, contato, senha, nivel, status, avatar, 2fa) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$qry) return false;
     $qry->bind_param(
         "ssssisss",
         $data['nome'],
@@ -509,6 +520,7 @@ $email_logado = $_SESSION['data_adm']['email'];
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= admin_t('modal_close') ?>"></button>
                                                         </div>
                                                         <form method="POST">
+                                                            <?php $csrf->echoInputField(); ?>
                                                             <input type="hidden" name="id" value="<?= $admin['id'] ?>">
                                                             <input type="hidden" name="contato" value="<?= $admin['contato'] ?>">
                                                             <input type="hidden" name="avatar" value="<?= $admin['avatar'] ?>">
@@ -588,6 +600,7 @@ $email_logado = $_SESSION['data_adm']['email'];
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <form method="POST">
+                                        <?php $csrf->echoInputField(); ?>
                                         <div class="modal-body">
                                             <div class="alert alert-danger d-flex align-items-center" role="alert">
                                                 <i class="ti ti-alert-triangle me-2"></i>
@@ -623,6 +636,7 @@ $email_logado = $_SESSION['data_adm']['email'];
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= admin_t('modal_close') ?>"></button>
                                     </div>
                                     <form method="POST">
+                                        <?php $csrf->echoInputField(); ?>
                                         <div class="modal-body">
                                             <div class="alert alert-info d-flex align-items-center" role="alert">
                                                 <i class="ti ti-shield-lock me-2"></i>

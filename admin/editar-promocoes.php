@@ -45,10 +45,12 @@ function update_promocao($id, $titulo, $status, $img = null) {
 
     try {
         if ($img) {
-            $qry = $mysqli->prepare("UPDATE promocoes SET titulo = ?, status = ?, img = ? WHERE id = ?");
-            $qry->bind_param("sisi", $titulo, $status, $img, $id);
+$qry = $mysqli->prepare("UPDATE promocoes SET titulo = ?, status = ?, img = ? WHERE id = ?");
+        if (!$qry) return false;
+        $qry->bind_param("sisi", $titulo, $status, $img, $id);
         } else {
             $qry = $mysqli->prepare("UPDATE promocoes SET titulo = ?, status = ? WHERE id = ?");
+            if (!$qry) return false;
             $qry->bind_param("sii", $titulo, $status, $id);
         }
 
@@ -68,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     # Buscar a imagem atual no banco de dados
     $query = "SELECT img FROM promocoes WHERE id = ?";
     $stmt = $mysqli->prepare($query);
+    if (!$stmt) { return; }
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -180,6 +183,7 @@ $promocoes = get_promocoes();
                                                         </div>
                                                         <div class="modal-body">
                                                             <form method="POST" enctype="multipart/form-data">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <input type="hidden" name="id" value="<?= $promocao['id']; ?>">
                                                                 <div class="mb-3">
                                                                     <label for="titulo" class="form-label">Título</label>

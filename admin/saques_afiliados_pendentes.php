@@ -90,21 +90,22 @@ include_once "validar_2fa.php";
                                                     }
 
                                                     $chaveatt = localizarchavepix($usuario['pix']);
+                                                    $pix_chave = ($chaveatt && isset($chaveatt['chave'])) ? $chaveatt['chave'] : htmlspecialchars($usuario['pix'] ?? '');
                                             ?>
                                                     <tr>
                                                         <td><?= $usuario['id']; ?></td>
-                                                        <td><?= $usuario['transacao_id']; ?></td>
+                                                        <td><?= htmlspecialchars($usuario['transacao_id']); ?></td>
                                                         <td>R$ <?= number_format($usuario['valor'], 2, ',', '.'); ?></td>
-                                                        <td><?= $usuario['data_registro']; ?></td>
-                                                        <td><?= $chaveatt['chave'] ?></td>
+                                                        <td><?= htmlspecialchars($usuario['data_registro']); ?></td>
+                                                        <td><?= htmlspecialchars($pix_chave); ?></td>
                                                         <td><?= $cargo_badge; ?></td>
                                                         <td>
                                                             <button class="btn btn-warning btn-edit-saque"
                                                                 data-id="<?= $usuario['id']; ?>"
-                                                                data-transacao="<?= $usuario['transacao_id']; ?>"
+                                                                data-transacao="<?= htmlspecialchars($usuario['transacao_id']); ?>"
                                                                 data-valor="<?= number_format($usuario['valor'], 2, ',', '.'); ?>"
-                                                                data-chave="<?= $chaveatt['chave']; ?>"
-                                                                data-usuario="<?= $mobile; ?>"
+                                                                data-chave="<?= htmlspecialchars($pix_chave); ?>"
+                                                                data-usuario="<?= htmlspecialchars($mobile ?? ''); ?>"
                                                                 data-status="<?= $usuario['status']; ?>">Editar</button>
                                                         </td>
                                                     </tr>

@@ -9,3 +9,6 @@ daanrox.txt
 errorlog.log
 online_users.json
 .vercel
+.env
+.env.local
+.env.*.local

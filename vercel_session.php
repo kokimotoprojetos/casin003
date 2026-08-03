@@ -9,14 +9,19 @@ class VercelSessionHandler implements SessionHandlerInterface
     private $connected = false;
     private $tableCreated = false;
 
-    private function connect()
+private function connect()
     {
         if ($this->connected) return;
-        $host = getenv('DB_HOST') ?: 'mysql-32225e83-mandadinheiroproloky-4897.i.aivencloud.com';
-        $user = getenv('DB_USER') ?: 'avnadmin';
-        $pass = getenv('DB_PASS') ?: 'AVNS_Hx-pbf22fhzULYbOUkR';
-        $db   = getenv('DB_NAME') ?: 'defaultdb';
-        $port = (int)(getenv('DB_PORT') ?: 18533);
+        $host = getenv('DB_HOST');
+        $user = getenv('DB_USER');
+        $pass = getenv('DB_PASS');
+        $db   = getenv('DB_NAME');
+        $port = getenv('DB_PORT');
+        if ($host === false || $user === false || $pass === false || $db === false || $port === false) {
+            error_log("VercelSession: missing DB env vars");
+            return;
+        }
+        $port = (int)$port;
         try {
             $this->mysqli = new mysqli();
             $this->mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5);

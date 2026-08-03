@@ -47,7 +47,8 @@ function count_games($search = '')
             WHERE game_name LIKE '%$search%' 
             AND api = 'iGameWin'";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 # Função para obter estatísticas dos jogos
@@ -65,22 +66,26 @@ function get_games_stats($search = '')
     // Total de jogos
     $qry = "SELECT COUNT(*) as total FROM games WHERE api = 'iGameWin' AND game_name LIKE '%$search%'";
     $result = mysqli_query($mysqli, $qry);
-    $stats['total'] = mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    $stats['total'] = $row ? (int)$row['total'] : 0;
     
     // Jogos ativos
     $qry = "SELECT COUNT(*) as active FROM games WHERE api = 'iGameWin' AND status = 1 AND game_name LIKE '%$search%'";
     $result = mysqli_query($mysqli, $qry);
-    $stats['active'] = mysqli_fetch_assoc($result)['active'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    $stats['active'] = $row ? (int)$row['active'] : 0;
     
     // Jogos populares
     $qry = "SELECT COUNT(*) as popular FROM games WHERE api = 'iGameWin' AND popular = 1 AND game_name LIKE '%$search%'";
     $result = mysqli_query($mysqli, $qry);
-    $stats['popular'] = mysqli_fetch_assoc($result)['popular'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    $stats['popular'] = $row ? (int)$row['popular'] : 0;
     
     // Número de provedores únicos
     $qry = "SELECT COUNT(DISTINCT provider) as providers FROM games WHERE api = 'iGameWin' AND game_name LIKE '%$search%'";
     $result = mysqli_query($mysqli, $qry);
-    $stats['providers'] = mysqli_fetch_assoc($result)['providers'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    $stats['providers'] = $row ? (int)$row['providers'] : 0;
     
     return $stats;
 }
@@ -102,7 +107,8 @@ function update_game($data)
         game_type = ?, 
         api = ? 
         WHERE id = ?");
-    
+    if (!$qry) return false;
+
     $qry->bind_param(
         "sssssssi", 
         $data['game_name'], 
@@ -126,8 +132,8 @@ function add_game($data)
     $qry = $mysqli->prepare("INSERT INTO games (game_name, game_code, banner, provider, type, game_type, api, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
     if (!$qry) {
-        var_dump($mysqli->error);
-        die("Erro ao preparar a consulta.");
+        error_log("igamewin add_game prepare failed: " . $mysqli->error);
+        return false;
     }
 
     $qry->bind_param(
@@ -143,8 +149,8 @@ function add_game($data)
     );
 
     if (!$qry->execute()) {
-        var_dump($qry->error);
-        die("Erro ao executar a consulta.");
+        error_log("igamewin add_game execute failed: " . $qry->error);
+        return false;
     }
 
     return true;
@@ -154,6 +160,7 @@ function delete_game($id)
 {
     global $mysqli;
     $qry = $mysqli->prepare("DELETE FROM games WHERE id = ?");
+    if (!$qry) return false;
     $qry->bind_param("i", $id);
     return $qry->execute();
 }
@@ -1425,6 +1432,7 @@ $games_stats = get_games_stats($search);
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="POST" action="">
+                                <?php $csrf->echoInputField(); ?>
                                 <div class="modal-body">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -1495,6 +1503,7 @@ $games_stats = get_games_stats($search);
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="modal-body">
                                         <div class="row">
                                             <div class="col-md-6">

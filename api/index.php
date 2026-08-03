@@ -16,6 +16,32 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', 'test-launch') !== false || isset($_GE
     echo json_encode(['result' => $res]);
     exit;
 }
+if (strpos($_SERVER['REQUEST_URI'] ?? '', 'pfiver-diag') !== false || isset($_GET['pfiver-diag'])) {
+    header('Content-Type: application/json');
+    require_once __DIR__ . '/../config.php';
+    require_once __DIR__ . '/../admin/services/database.php';
+    require_once __DIR__ . '/../admin/services/crud.php';
+    $cfg = data_playfiver();
+    $proxy = trim($cfg['proxy'] ?? '');
+    $proxyMasked = '';
+    if ($proxy !== '') {
+        $proxyMasked = preg_replace('/(:\/\/)([^:]+):([^@]+)@/', '$1***:***@', $proxy);
+    }
+    $ipEcho = enviarRequestPlayFiver('https://api.ipify.org?format=json', json_encode(['x' => 1]), $proxy);
+    $ipData = json_decode($ipEcho, true);
+    echo json_encode([
+        'ativo' => isset($cfg['ativo']) ? intval($cfg['ativo']) : null,
+        'proxy_configured' => $proxy !== '',
+        'proxy_masked' => $proxyMasked,
+        'agent_code_set' => !empty(trim($cfg['agent_code'] ?? '')),
+        'agent_token_set' => !empty(trim($cfg['agent_token'] ?? '')),
+        'agent_secret_set' => !empty(trim($cfg['agent_secret'] ?? '')),
+        'url_set' => !empty(trim($cfg['url'] ?? '')),
+        'ip_seen_by_playfiver' => $ipData['ip'] ?? null,
+        'ip_echo_raw' => $ipEcho,
+    ], JSON_PRETTY_PRINT);
+    exit;
+}
 chdir(__DIR__ . '/..');
 set_error_handler(function ($severity, $message, $file, $line) {
     error_log("PHP Error [$severity] $message in $file:$line");
@@ -86,6 +112,7 @@ $cleanRoutes = [
     '/callbackpayment/versell'    => '/callbackpayment/versell.php',
     '/callbackpayment/webhook'    => '/callbackpayment/webhook.php',
     '/callbackpayment/inpagamentos' => '/callbackpayment/inpagamentos.php',
+    '/callbackpayment/poseidonpay' => '/callbackpayment/poseidonpay.php',
     '/gold_api'                   => '/callback/game_callback.php',
     '/infinitysoft_api'           => '/callback/game_callback.php',
     '/igamewin'                   => '/callback/igamewin.php',

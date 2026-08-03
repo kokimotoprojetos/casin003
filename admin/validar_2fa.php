@@ -86,8 +86,14 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'validar_2fa.php' && $_SERVER['REQUEST
     $username = $user['nome'];
 
     if (!empty($hash)) {
-        // Validate existing 2FA
-        if ($token === $hash) {
+        // Validate existing 2FA. New tokens are stored as bcrypt hashes
+        // (>= 60 chars); legacy plaintext tokens are compared with hash_equals
+        // for backwards compatibility until the admin redefines 2FA.
+        $isValid = (strlen($hash) >= 60)
+            ? password_verify($token, $hash)
+            : hash_equals($hash, $token);
+
+        if ($isValid) {
             $_SESSION['2fa_verified'] = true;
             $_SESSION['2fa_user_id'] = $adminId;
             $_SESSION['2fa_username'] = $username;
@@ -98,17 +104,25 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'validar_2fa.php' && $_SERVER['REQUEST
             echo json_encode(['success' => false, 'message' => 'Token incorreto.']);
         }
     } else {
-        // First time setup: Set the token as the 2FA (plaintext)
-        $newHash = $token;
-        
+        // First time setup: hash the token with bcrypt before persisting.
+        $newHash = password_hash($token, PASSWORD_DEFAULT);
+        if ($newHash === false) {
+            echo json_encode(['success' => false, 'message' => 'Erro ao configurar 2FA.']);
+            exit;
+        }
+
         $update = $mysqli->prepare("UPDATE admin_users SET `2fa` = ? WHERE id = ?");
+        if (!$update) {
+            echo json_encode(['success' => false, 'message' => 'Erro ao configurar 2FA.']);
+            exit;
+        }
         $update->bind_param("si", $newHash, $adminId);
-        
+
         if ($update->execute()) {
              $_SESSION['2fa_verified'] = true;
              $_SESSION['2fa_user_id'] = $adminId;
              $_SESSION['2fa_username'] = $username;
-             
+
              enviarNotificacaoTelegram($username);
              echo json_encode(['success' => true, 'message' => '2FA configurado com sucesso.']);
         } else {

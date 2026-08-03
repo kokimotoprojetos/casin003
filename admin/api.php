@@ -22,7 +22,9 @@ function get_pgclone_config()
     global $mysqli;
     $qry = "SELECT * FROM pgclone WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return null;
+    $data = mysqli_fetch_assoc($result);
+    return $data !== false ? $data : null;
 }
 
 function update_pgclone_config($data)
@@ -35,6 +37,7 @@ function update_pgclone_config($data)
         agent_secret = ?, 
         ativo = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssssi",
@@ -53,7 +56,9 @@ function get_igamewin_config()
     global $mysqli;
     $qry = "SELECT * FROM igamewin WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return null;
+    $data = mysqli_fetch_assoc($result);
+    return $data !== false ? $data : null;
 }
 
 function update_igamewin_config($data)
@@ -66,6 +71,7 @@ function update_igamewin_config($data)
         agent_secret = ?,
         ativo = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssssi",
@@ -84,7 +90,9 @@ function get_ppclone_config()
     global $mysqli;
     $qry = "SELECT * FROM ppclone WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return null;
+    $data = mysqli_fetch_assoc($result);
+    return $data !== false ? $data : null;
 }
 
 function update_ppclone_config($data)
@@ -97,6 +105,7 @@ function update_ppclone_config($data)
         agent_secret = ?, 
         ativo = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssssi",
@@ -115,7 +124,9 @@ function get_drakon_config()
     global $mysqli;
     $qry = "SELECT * FROM drakon WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return null;
+    $data = mysqli_fetch_assoc($result);
+    return $data !== false ? $data : null;
 }
 
 function update_drakon_config($data)
@@ -128,6 +139,7 @@ function update_drakon_config($data)
         agent_secret_key = ?, 
         ativo = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssssi",
@@ -146,7 +158,9 @@ function get_playfiver_config()
     global $mysqli;
     $qry = "SELECT * FROM playfiver WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return null;
+    $data = mysqli_fetch_assoc($result);
+    return $data !== false ? $data : null;
 }
 
 function update_playfiver_config($data)
@@ -159,6 +173,7 @@ function update_playfiver_config($data)
         agent_secret = ?, 
         ativo = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssssi",
@@ -303,7 +318,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                            <div class="card mb-4">-->
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">URL</h5>-->
-                <!--                                    <input type="text" name="url_pgclone" class="form-control" value="<?= $pgclone_config['url'] ?>" required>-->
+                <!--                                    <input type="text" name="url_pgclone" class="form-control" value="<?= $pgclone_config['url'] ?? '' ?>" required>-->
                 <!--                                </div>-->
                 <!--                            </div>-->
                 <!--                        </div>-->
@@ -313,7 +328,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Code</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_code_pgclone" name="agent_code_pgclone" class="form-control" value="<?= $pgclone_config['agent_code'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_code_pgclone" name="agent_code_pgclone" class="form-control" value="<?= $pgclone_config['agent_code'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_code_pgclone', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -327,7 +342,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Token</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_token_pgclone" name="agent_token_pgclone" class="form-control" value="<?= $pgclone_config['agent_token'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_token_pgclone" name="agent_token_pgclone" class="form-control" value="<?= $pgclone_config['agent_token'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_token_pgclone', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -341,7 +356,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Secret</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_secret_pgclone" name="agent_secret_pgclone" class="form-control" value="<?= $pgclone_config['agent_secret'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_secret_pgclone" name="agent_secret_pgclone" class="form-control" value="<?= $pgclone_config['agent_secret'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_secret_pgclone', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -355,8 +370,8 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>-->
                 <!--                                    <select name="ativo_pgclone" class="form-select" required>-->
-                <!--                                        <option value="1" <?= $pgclone_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>-->
-                <!--                                        <option value="0" <?= $pgclone_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>-->
+                <!--                                        <option value="1" <?= ($pgclone_config['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>Sim</option>-->
+                <!--                                        <option value="0" <?= ($pgclone_config['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>Não</option>-->
                 <!--                                    </select>-->
                 <!--                                </div>-->
                 <!--                            </div>-->
@@ -380,13 +395,14 @@ $playfiver_config = get_playfiver_config();
                             </div>
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <input type="hidden" name="update_igamewin">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="card mb-4">
                                                 <div class="card-body">
                                                     <h5 class="card-title">URL</h5>
-                                                    <input type="text" name="url_igamewin" class="form-control" value="<?= $igamewin_config['url'] ?>" required>
+                                                    <input type="text" name="url_igamewin" class="form-control" value="<?= $igamewin_config['url'] ?? '' ?>" required>
                                                 </div>
                                             </div>
                                         </div>
@@ -396,7 +412,7 @@ $playfiver_config = get_playfiver_config();
                                                 <div class="card-body">
                                                     <h5 class="card-title">Agent Code</h5>
                                                     <div class="input-group">
-                                                        <input type="password" id="agent_code_igamewin" name="agent_code_igamewin" class="form-control" value="<?= $igamewin_config['agent_code'] ?>" required>
+                                                        <input type="password" id="agent_code_igamewin" name="agent_code_igamewin" class="form-control" value="<?= $igamewin_config['agent_code'] ?? '' ?>" required>
                                                         <span class="input-group-text" onclick="togglePassword('agent_code_igamewin', this)">
                                                             <i class="ti ti-eye"></i>
                                                         </span>
@@ -410,7 +426,7 @@ $playfiver_config = get_playfiver_config();
                                                 <div class="card-body">
                                                     <h5 class="card-title">Agent Token</h5>
                                                     <div class="input-group">
-                                                        <input type="password" id="agent_token_igamewin" name="agent_token_igamewin" class="form-control" value="<?= $igamewin_config['agent_token'] ?>" required>
+                                                        <input type="password" id="agent_token_igamewin" name="agent_token_igamewin" class="form-control" value="<?= $igamewin_config['agent_token'] ?? '' ?>" required>
                                                         <span class="input-group-text" onclick="togglePassword('agent_token_igamewin', this)">
                                                             <i class="ti ti-eye"></i>
                                                         </span>
@@ -438,8 +454,8 @@ $playfiver_config = get_playfiver_config();
                                                 <div class="card-body">
                                                     <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>
                                                     <select name="ativo_igamewin" class="form-select" required>
-                                                        <option value="1" <?= $igamewin_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>
-                                                        <option value="0" <?= $igamewin_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>
+                                                        <option value="1" <?= ($igamewin_config['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>Sim</option>
+                                                        <option value="0" <?= ($igamewin_config['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>Não</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -470,7 +486,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                            <div class="card mb-4">-->
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">URL</h5>-->
-                <!--                                    <input type="text" name="url_ppclone" class="form-control" value="<?= $ppclone_config['url'] ?>" required>-->
+                <!--                                    <input type="text" name="url_ppclone" class="form-control" value="<?= $ppclone_config['url'] ?? '' ?>" required>-->
                 <!--                                </div>-->
                 <!--                            </div>-->
                 <!--                        </div>-->
@@ -480,7 +496,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Code</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_code_ppclone" name="agent_code_ppclone" class="form-control" value="<?= $ppclone_config['agent_code'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_code_ppclone" name="agent_code_ppclone" class="form-control" value="<?= $ppclone_config['agent_code'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_code_ppclone', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -494,7 +510,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Token</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_token_ppclone" name="agent_token_ppclone" class="form-control" value="<?= $ppclone_config['agent_token'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_token_ppclone" name="agent_token_ppclone" class="form-control" value="<?= $ppclone_config['agent_token'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_token_ppclone', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -508,7 +524,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Secret</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_secret_ppclone" name="agent_secret_ppclone" class="form-control" value="<?= $ppclone_config['agent_secret'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_secret_ppclone" name="agent_secret_ppclone" class="form-control" value="<?= $ppclone_config['agent_secret'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_secret_ppclone', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -522,8 +538,8 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>-->
                 <!--                                    <select name="ativo_ppclone" class="form-select" required>-->
-                <!--                                        <option value="1" <?= $ppclone_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>-->
-                <!--                                        <option value="0" <?= $ppclone_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>-->
+                <!--                                        <option value="1" <?= ($ppclone_config['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>Sim</option>-->
+                <!--                                        <option value="0" <?= ($ppclone_config['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>Não</option>-->
                 <!--                                    </select>-->
                 <!--                                </div>-->
                 <!--                            </div>-->
@@ -553,7 +569,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                            <div class="card mb-4">-->
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">API Base</h5>-->
-                <!--                                    <input type="text" name="api_base_drakon" class="form-control" value="<?= $drakon_config['api_base'] ?>" required>-->
+                <!--                                    <input type="text" name="api_base_drakon" class="form-control" value="<?= $drakon_config['api_base'] ?? '' ?>" required>-->
                 <!--                                </div>-->
                 <!--                            </div>-->
                 <!--                        </div>-->
@@ -563,7 +579,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Code</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_code_drakon" name="agent_code_drakon" class="form-control" value="<?= $drakon_config['agent_code'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_code_drakon" name="agent_code_drakon" class="form-control" value="<?= $drakon_config['agent_code'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_code_drakon', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -577,7 +593,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Token</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_token_drakon" name="agent_token_drakon" class="form-control" value="<?= $drakon_config['agent_token'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_token_drakon" name="agent_token_drakon" class="form-control" value="<?= $drakon_config['agent_token'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_token_drakon', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -591,7 +607,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Secret Key</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_secret_key_drakon" name="agent_secret_key_drakon" class="form-control" value="<?= $drakon_config['agent_secret_key'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_secret_key_drakon" name="agent_secret_key_drakon" class="form-control" value="<?= $drakon_config['agent_secret_key'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_secret_key_drakon', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -605,8 +621,8 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>-->
                 <!--                                    <select name="ativo_drakon" class="form-select" required>-->
-                <!--                                        <option value="1" <?= $drakon_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>-->
-                <!--                                        <option value="0" <?= $drakon_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>-->
+                <!--                                        <option value="1" <?= ($drakon_config['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>Sim</option>-->
+                <!--                                        <option value="0" <?= ($drakon_config['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>Não</option>-->
                 <!--                                    </select>-->
                 <!--                                </div>-->
                 <!--                            </div>-->
@@ -636,7 +652,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                            <div class="card mb-4">-->
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">URL</h5>-->
-                <!--                                    <input type="text" name="url_playfiver" class="form-control" value="<?= $playfiver_config['url'] ?>" required>-->
+                <!--                                    <input type="text" name="url_playfiver" class="form-control" value="<?= $playfiver_config['url'] ?? '' ?>" required>-->
                 <!--                                </div>-->
                 <!--                            </div>-->
                 <!--                        </div>-->
@@ -646,7 +662,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Code</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_code_playfiver" name="agent_code_playfiver" class="form-control" value="<?= $playfiver_config['agent_code'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_code_playfiver" name="agent_code_playfiver" class="form-control" value="<?= $playfiver_config['agent_code'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_code_playfiver', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -660,7 +676,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Token</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_token_playfiver" name="agent_token_playfiver" class="form-control" value="<?= $playfiver_config['agent_token'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_token_playfiver" name="agent_token_playfiver" class="form-control" value="<?= $playfiver_config['agent_token'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_token_playfiver', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -674,7 +690,7 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title">Agent Secret</h5>-->
                 <!--                                    <div class="input-group">-->
-                <!--                                        <input type="password" id="agent_secret_playfiver" name="agent_secret_playfiver" class="form-control" value="<?= $playfiver_config['agent_secret'] ?>" required>-->
+                <!--                                        <input type="password" id="agent_secret_playfiver" name="agent_secret_playfiver" class="form-control" value="<?= $playfiver_config['agent_secret'] ?? '' ?>" required>-->
                 <!--                                        <span class="input-group-text" onclick="togglePassword('agent_secret_playfiver', this)">-->
                 <!--                                            <i class="ti ti-eye"></i>-->
                 <!--                                        </span>-->
@@ -688,8 +704,8 @@ $playfiver_config = get_playfiver_config();
                 <!--                                <div class="card-body">-->
                 <!--                                    <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>-->
                 <!--                                    <select name="ativo_playfiver" class="form-select" required>-->
-                <!--                                        <option value="1" <?= $playfiver_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>-->
-                <!--                                        <option value="0" <?= $playfiver_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>-->
+                <!--                                        <option value="1" <?= ($playfiver_config['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>Sim</option>-->
+                <!--                                        <option value="0" <?= ($playfiver_config['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>Não</option>-->
                 <!--                                    </select>-->
                 <!--                                </div>-->
                 <!--                            </div>-->

@@ -29,6 +29,7 @@ if ($_SESSION['data_adm']['status'] != '1') {
 function get_banners($type = 'lobby_carousel') {
     global $mysqli;
     $stmt = $mysqli->prepare("SELECT * FROM banner WHERE type = ?");
+    if (!$stmt) return false;
     $stmt->bind_param("s", $type);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -46,9 +47,11 @@ function update_banner($id, $titulo, $status, $img = null, $targetValue = null, 
 
     if ($img) {
         $qry = $mysqli->prepare("UPDATE banner SET titulo = ?, status = ?, img = ?, targetValue = ?, defaultIconUrl = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("sisssi", $titulo, $status, $img, $targetValue, $defaultIconUrl, $id);
     } else {
         $qry = $mysqli->prepare("UPDATE banner SET titulo = ?, status = ?, targetValue = ?, defaultIconUrl = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("sisssi", $titulo, $status, $targetValue, $defaultIconUrl, $id);
     }
 
@@ -59,6 +62,7 @@ function create_banner($type, $titulo, $status, $img, $targetValue = null, $defa
 {
     global $mysqli;
     $qry = $mysqli->prepare("INSERT INTO banner (type, titulo, status, img, targetValue, defaultIconUrl) VALUES (?, ?, ?, ?, ?, ?)");
+    if (!$qry) return false;
     $qry->bind_param("ssisss", $type, $titulo, $status, $img, $targetValue, $defaultIconUrl);
     return $qry->execute();
 }
@@ -117,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $id = intval($_POST['id']);
         $query = "SELECT img FROM banner WHERE id = ?";
         $stmt = $mysqli->prepare($query);
+        if (!$stmt) { return; }
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -270,6 +275,7 @@ $defaultIcons = [
                                                             </div>
                                                             <div class="modal-body">
                                                                 <form method="POST" enctype="multipart/form-data">
+                                                                    <?php $csrf->echoInputField(); ?>
                                                                     <input type="hidden" name="action" value="update">
                                                                     <input type="hidden" name="id" value="<?= $banner['id']; ?>">
                                                                     <div class="mb-3">
@@ -334,6 +340,7 @@ $defaultIcons = [
                                                             </div>
                                                             <div class="modal-body">
                                                                 <form method="POST" enctype="multipart/form-data">
+                                                                    <?php $csrf->echoInputField(); ?>
                                                                     <input type="hidden" name="action" value="update">
                                                                     <input type="hidden" name="id" value="<?= $banner['id']; ?>">
                                                                     <div class="mb-3">
@@ -403,6 +410,7 @@ $defaultIcons = [
                                                             </div>
                                                             <div class="modal-body">
                                                                 <form method="POST" enctype="multipart/form-data">
+                                                                    <?php $csrf->echoInputField(); ?>
                                                                     <input type="hidden" name="action" value="update">
                                                                     <input type="hidden" name="id" value="<?= $banner['id']; ?>">
                                                                     <div class="mb-3">
@@ -508,6 +516,7 @@ $defaultIcons = [
                 </div>
                 <div class="modal-body">
                     <form method="POST" enctype="multipart/form-data">
+                        <?php $csrf->echoInputField(); ?>
                         <input type="hidden" name="action" value="create">
                         <input type="hidden" name="type" value="lobby_carousel">
                         <div class="mb-3">
@@ -543,6 +552,7 @@ $defaultIcons = [
                 </div>
                 <div class="modal-body">
                     <form method="POST" enctype="multipart/form-data">
+                        <?php $csrf->echoInputField(); ?>
                         <input type="hidden" name="action" value="create">
                         <input type="hidden" name="type" value="lobby_sidebar_banner">
                         <div class="mb-3">

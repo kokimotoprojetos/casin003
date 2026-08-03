@@ -186,6 +186,7 @@ $config = mysqli_fetch_assoc($result);
                             </div>
                             <div class="card-body">
                                 <form method="POST" enctype="multipart/form-data">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row mt-12">
                                         <div class="col-md-4"> <!-- Ajustado para 4 colunas para cada imagem -->
                                             <div class="card">

@@ -357,3 +357,22 @@ function validarCPF($cpf)
 
     return ($digitoCalculado1 == $digitoVerificador1 && $digitoCalculado2 == $digitoVerificador2);
 }
+
+#=====================================================#
+# Helper para prepare() seguro: retorna false em vez
+# de Fatal Error quando o MySQL rejeita a SQL.
+if (!function_exists('safe_prepare')) {
+    function safe_prepare($mysqli, $sql)
+    {
+        if (!$mysqli) {
+            error_log('safe_prepare: mysqli connection is null');
+            return false;
+        }
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            error_log('safe_prepare failed: ' . $mysqli->error . ' | SQL: ' . $sql);
+            return false;
+        }
+        return $stmt;
+    }
+}

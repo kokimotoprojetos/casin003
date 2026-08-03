@@ -82,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             <div class="card-body">
                                 <form method="POST">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row">
 
                                         <!-- Atendimento -->

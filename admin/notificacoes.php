@@ -80,6 +80,7 @@ if ($result) {
                             </div>
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <input type="hidden" name="action" value="create_notification">
                                     <div class="row g-3">
                                         <div class="col-md-6">

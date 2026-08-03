@@ -25,7 +25,9 @@ function get_afiliados_config()
     global $mysqli;
     $qry = "SELECT * FROM config WHERE id=1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return [];
+    $data = mysqli_fetch_assoc($result);
+    return $data ?: [];
 }
 
 function update_config($data)
@@ -39,6 +41,7 @@ function update_config($data)
         marquee = ?,
         painel_rolante = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssssss",
@@ -102,6 +105,7 @@ $config = get_afiliados_config();
 
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row">
                                         <!-- Nome -->
                                         <div class="col-md-6">

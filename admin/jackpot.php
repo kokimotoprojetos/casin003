@@ -2,8 +2,8 @@
 
 <?php
 #======================================#
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 #======================================#
 session_start();
@@ -38,7 +38,8 @@ function get_jackpot_atual()
     global $mysqli;
     $qry = "SELECT jackpot FROM config WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['jackpot'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? $row['jackpot'] : 0;
 }
 
 function get_jackpot_ativado()
@@ -69,6 +70,7 @@ function update_jackpot_custom($filename)
 {
     global $mysqli;
     $qry = $mysqli->prepare("UPDATE config SET jackpot_custom = ? WHERE id = 1");
+    if (!$qry) return false;
     $qry->bind_param("s", $filename);
     return $qry->execute();
 }
@@ -77,6 +79,7 @@ function ativar_desativar_jackpot($opcao)
 {
     global $mysqli;
     $qry = $mysqli->prepare("UPDATE config SET jackpot_ativado = ? WHERE id = 1");
+    if (!$qry) return false;
     $qry->bind_param("i", $opcao);
     return $qry->execute();
 }
@@ -86,7 +89,7 @@ $toastType = null;
 $toastMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $jackpot_selecionado = intval($_POST['jackpot']);
+    $jackpot_selecionado = isset($_POST['jackpot']) ? intval($_POST['jackpot']) : 0;
 
     $jackpot_ativado = isset($_POST['jackpot_ativado']) ? intval($_POST['jackpot_ativado']) : 0;
 
@@ -190,6 +193,7 @@ $recorde_ativado = get_recorde_ativado();
 
                             <div class="card-body">
                                 <form method="POST" action="" enctype="multipart/form-data">
+                                    <?php $csrf->echoInputField(); ?>
                                     <!-- Campo para custom jackpot -->
                                     <div class="row mt-12">
                                         <div class="col-md-12">

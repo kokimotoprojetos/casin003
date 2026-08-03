@@ -2,7 +2,7 @@
 
 <?php
 #======================================#
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error.log');
@@ -30,7 +30,9 @@ function get_afiliados_config()
     global $mysqli;
     $qry = "SELECT * FROM afiliados_config WHERE id=1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return [];
+    $data = mysqli_fetch_assoc($result);
+    return $data ?: [];
 }
 
 function get_config()
@@ -38,7 +40,9 @@ function get_config()
     global $mysqli;
     $qry = "SELECT * FROM config WHERE id=1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return [];
+    $data = mysqli_fetch_assoc($result);
+    return $data ?: [];
 }
 
 # Função para buscar configurações de manipulação de indicações
@@ -75,6 +79,7 @@ function update_afiliados_config($data)
         dep_on = ?,
         bet_on = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ddddddiii",
@@ -100,6 +105,7 @@ function update_config($data)
         niveisbau = ?, 
         pessoasbau = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssd",
@@ -119,6 +125,7 @@ function update_manipulacao_indicacoes($data)
         roubar_indicacoes = ?,
         ativo = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "iii",
@@ -206,6 +213,7 @@ $manipulacaoConfig = get_manipulacao_indicacoes();
 
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     
                                     <h5 class="mb-3 text-primary"><i class="iconoir-percentage"></i> <?= admin_t('chests_section_affiliates_title') ?></h5>
                                     

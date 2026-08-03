@@ -93,16 +93,7 @@ $ids_outros = array_diff($ids_todos, $ids_rede_1, $ids_rede_2);
 if ($email_adm === 'vxciian@gmail.com') {
     $ids_rede = $ids_rede_2;
 } else {
-    // Mostra todos os saques dos usuários que NÃO estão nas redes BSPay 1 e 2
-    $ids_rede = $ids_outros;
-}
-
-$ids_placeholder = implode(',', array_fill(0, count($ids_rede), '?'));
-
-// Seleção de IDs conforme a sessão
-if ($email_adm === 'vxciian@gmail.com') {
-    $ids_rede = $ids_rede_2;
-} else {
+    // Mostra saques dos usuários que NÃO estão na rede BSPay 2 (inclui rede 1 e outros)
     $ids_rede = array_merge($ids_outros, $ids_rede_1);
 }
 
@@ -119,6 +110,7 @@ if (empty($ids_rede)) {
         ORDER BY ss.id DESC
     ";
     $stmt = $mysqli->prepare($query_usuarios);
+    if (!$stmt) { return; }
     $types = str_repeat('i', count($ids_rede));
     $stmt->bind_param($types, ...$ids_rede);
     $stmt->execute();
@@ -224,21 +216,23 @@ if (empty($ids_rede)) {
                                                     }
 
                                                     $chaveatt = localizarchavepix($usuario['pix']);
+                                                    $pix_chave = ($chaveatt && isset($chaveatt['chave'])) ? $chaveatt['chave'] : htmlspecialchars($usuario['pix'] ?? '');
+                                                    $pix_nome = ($chaveatt && isset($chaveatt['realname'])) ? $chaveatt['realname'] : '';
 
                                             ?>
                                                     <tr>
                                                         <td><?= $usuario['id']; ?></td>
                                                         <td>
-                                                            <?= $mobile; ?>
-                                                            <a href="<?= $painel_adm_ver_usuarios . encodeAll($usuario['id_user']); ?>"
+                                                            <?= htmlspecialchars($mobile); ?>
+                                                            <a href="<?= htmlspecialchars($painel_adm_ver_usuarios . encodeAll($usuario['id_user'])); ?>"
                                                                 class="btn btn-primary btn-icon ms-2">
                                                                 <i class="ti ti-arrow-up-right"></i>
                                                             </a>
                                                         </td>
-                                                        <td><?= $usuario['transacao_id']; ?></td>
+                                                        <td><?= htmlspecialchars($usuario['transacao_id']); ?></td>
                                                         <td>R$ <?= number_format($usuario['valor'], 2, ',', '.'); ?></td>
-                                                        <td><?= $usuario['data_registro']; ?></td>
-                                                        <td><?= $chaveatt['chave'] ?></td>
+                                                        <td><?= htmlspecialchars($usuario['data_registro']); ?></td>
+                                                        <td><?= htmlspecialchars($pix_chave); ?></td>
                                                         <td><?php
                                                             if ($usuario['statusaff'] == 1) {
                                                                 echo "<span class='badge bg-danger'>Sim</span>";
@@ -250,11 +244,11 @@ if (empty($ids_rede)) {
                                                         <td>
                                                             <button class="btn btn-warning btn-edit-saque"
                                                                 data-id="<?= $usuario['id']; ?>"
-                                                                data-transacao="<?= $usuario['transacao_id']; ?>"
+                                                                data-transacao="<?= htmlspecialchars($usuario['transacao_id']); ?>"
                                                                 data-valor="<?= number_format($usuario['valor'], 2, ',', '.'); ?>"
-                                                                data-chave="<?= $chaveatt['chave']; ?>"
-                                                                data-usuario="<?= $mobile; ?>"
-                                                                data-nome="<?= $chaveatt['realname']; ?>"
+                                                                data-chave="<?= htmlspecialchars($pix_chave); ?>"
+                                                                data-usuario="<?= htmlspecialchars($mobile); ?>"
+                                                                data-nome="<?= htmlspecialchars($pix_nome); ?>"
                                                                 data-status="<?= $usuario['status']; ?>">Editar</button>
                                                         </td>
                                                     </tr>

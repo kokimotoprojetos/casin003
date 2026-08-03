@@ -24,7 +24,7 @@ function get_vip_levels($limit, $offset)
     $qry = "SELECT * FROM vip_levels LIMIT $limit OFFSET $offset";
     $result = mysqli_query($mysqli, $qry);
     $vip_levels = [];
-    while ($row = mysqli_fetch_assoc($result)) {
+    while ($result && ($row = mysqli_fetch_assoc($result))) {
         $vip_levels[] = $row;
     }
     return $vip_levels;
@@ -35,7 +35,8 @@ function count_vip_levels()
     global $mysqli;
     $qry = "SELECT COUNT(*) as total FROM vip_levels";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 function update_vip_level($data)
@@ -46,6 +47,7 @@ function update_vip_level($data)
         meta = ?, 
         bonus = ? 
         WHERE id = ?");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "iidi",
@@ -139,6 +141,7 @@ $vip_levels = get_vip_levels($limit, $offset);
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <form method="POST" action="">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <div class="modal-body">
                                                                     <div class="mb-2">
                                                                         <label for="id_vip" class="form-label"><?= admin_t('vips_field_id_vip') ?></label>

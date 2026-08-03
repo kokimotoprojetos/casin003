@@ -47,7 +47,8 @@ function count_games($search = '')
             WHERE game_name LIKE '%$search%' 
             AND api = 'PlayFiver'";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 # Função para atualizar os dados do jogo
@@ -67,7 +68,8 @@ function update_game($data)
         game_type = ?, 
         api = ? 
         WHERE id = ?");
-    
+    if (!$qry) return false;
+
     $qry->bind_param(
         "sssssssi", 
         $data['game_name'], 
@@ -91,8 +93,8 @@ function add_game($data)
     $qry = $mysqli->prepare("INSERT INTO games (game_name, game_code, banner, provider, type, game_type, api, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
     if (!$qry) {
-        var_dump($mysqli->error);
-        die("Erro ao preparar a consulta.");
+        error_log("gamesplayfiver add_game prepare failed: " . $mysqli->error);
+        return false;
     }
 
     $qry->bind_param(
@@ -108,8 +110,8 @@ function add_game($data)
     );
 
     if (!$qry->execute()) {
-        var_dump($qry->error);
-        die("Erro ao executar a consulta.");
+        error_log("gamesplayfiver add_game execute failed: " . $qry->error);
+        return false;
     }
 
     return true;
@@ -119,6 +121,7 @@ function delete_game($id)
 {
     global $mysqli;
     $qry = $mysqli->prepare("DELETE FROM games WHERE id = ?");
+    if (!$qry) return false;
     $qry->bind_param("i", $id);
     return $qry->execute();
 }
@@ -267,6 +270,7 @@ $games = get_games($limit, $offset, $search);
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
                                                         <form method="POST" action="">
+                                                            <?php $csrf->echoInputField(); ?>
                                                             <div class="modal-body">
                                                                 <div class="mb-3">
                                                                     <label for="game_name" class="form-label">Nome do Jogo</label>
@@ -307,6 +311,7 @@ $games = get_games($limit, $offset, $search);
                                                                 <button type="submit" class="btn btn-primary">Salvar alterações</button>
                                                                 
                                                                 <form method="POST" action="" style="display:inline;">
+                                                                    <?php $csrf->echoInputField(); ?>
                                                                     <input type="hidden" name="id" value="<?= $game['id'] ?>">
                                                                     <button type="submit" class="btn btn-danger" name="delete_game">Excluir Jogo</button>
                                                                 </form>
@@ -325,6 +330,7 @@ $games = get_games($limit, $offset, $search);
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
                                                         <form method="POST" action="">
+                                                            <?php $csrf->echoInputField(); ?>
                                                             <div class="modal-body">
                                                                 <div class="mb-3">
                                                                     <label for="game_name" class="form-label">Nome do Jogo</label>

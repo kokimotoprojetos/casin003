@@ -63,6 +63,7 @@ function update_config($data)
         topIconColor = ?
 
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
            "sss",
@@ -129,6 +130,7 @@ $download_popup = get_download_popup();
 
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row">
                                         <!-- Switch de ativar/desativar jackpot -->
                                         <div class="row mb-4 align-items-center">

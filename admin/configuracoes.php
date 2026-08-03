@@ -1,6 +1,6 @@
 <?php include 'partials/html.php' ?>
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 session_start();
 include_once "services/database.php";
@@ -53,6 +53,7 @@ function update_config($data)
         limite_saque = ?
         WHERE id = 1");
 
+    if (!$qry) return false;
     $qry->bind_param(
         "ddddsdd",
         $data['minsaque'],
@@ -86,6 +87,7 @@ function update_payment_method($id, $data)
         bonus_active = ?
         WHERE id = ?");
         
+    if (!$qry) return false;
     $qry->bind_param(
         "ssissddii",
         $data['name'],
@@ -178,6 +180,7 @@ $paymentMethods = get_payment_methods();
 
                             <div class="card-body p-4">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row g-4">
                                         
                                         <!-- Saque Mínimo -->
@@ -278,6 +281,7 @@ $paymentMethods = get_payment_methods();
                             </div>
                             <div class="card-body p-4">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <input type="hidden" name="action" value="update_payment_methods">
                                     
                                     <?php foreach($paymentMethods as $index => $pay): ?>

@@ -2,7 +2,7 @@
 
 <?php
 #======================================#
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 #======================================#
 session_start();
@@ -44,9 +44,11 @@ function update_banner($id, $titulo, $status, $img = null) {
 
     if ($img) {
         $qry = $mysqli->prepare("UPDATE festival SET titulo = ?, status = ?, img = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("sisi", $titulo, $status, $img, $id);
     } else {
         $qry = $mysqli->prepare("UPDATE festival SET titulo = ?, status = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("sii", $titulo, $status, $id);
     }
 
@@ -62,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Buscar a imagem atual no banco de dados
     $query = "SELECT img FROM festival WHERE id = ?";
     $stmt = $mysqli->prepare($query);
+    if (!$stmt) { return; }
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -178,6 +181,7 @@ $banners = get_banners();
                                                         </div>
                                                         <div class="modal-body">
                                                             <form method="POST" enctype="multipart/form-data">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <input type="hidden" name="id" value="<?= $banner['id']; ?>">
                                                                 <div class="mb-3">
                                                                     <label for="titulo" class="form-label">Título</label>

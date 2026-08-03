@@ -33,6 +33,7 @@ function validar_2fa_admin($codigo_2fa)
     $admin_id = intval($_SESSION['data_adm']['id']);
 
     $qry = $mysqli->prepare("SELECT `2fa` FROM admin_users WHERE id = ?");
+    if (!$qry) return false;
     $qry->bind_param("i", $admin_id);
     $qry->execute();
     $result = $qry->get_result();
@@ -74,11 +75,20 @@ function get_gateways_config()
     $LytResult = mysqli_query($mysqli, $LytQuery);
     $LytConfig = mysqli_fetch_assoc($LytResult);
 
+    $PosQuery = "SELECT * FROM poseidonpay WHERE id = 1";
+    try {
+        $PosResult = mysqli_query($mysqli, $PosQuery);
+        $PosConfig = mysqli_fetch_assoc($PosResult);
+    } catch (Throwable $e) {
+        $PosConfig = null;
+    }
+
     return [
         'greepay' => $GreePayConfig,
         'ironpay' => $IronConfig,
         'invictuspay' => $InvConfig,
-        'lytronpay' => $LytConfig
+        'lytronpay' => $LytConfig,
+        'poseidonpay' => $PosConfig
     ];
 }
 
@@ -96,6 +106,7 @@ function update_gateway_status($selectedGateway)
     $mysqli->query("UPDATE ironpay SET ativo = 0 WHERE id = 1");
     $mysqli->query("UPDATE invictuspay SET ativo = 0 WHERE id = 1");
     $mysqli->query("UPDATE lytronpay SET ativo = 0 WHERE id = 1");
+    try { $mysqli->query("UPDATE poseidonpay SET ativo = 0 WHERE id = 1"); } catch (Throwable $e) {}
 
     if ($selectedGateway === 'GGPIX') {
         $mysqli->query("UPDATE greepay SET ativo = 1 WHERE id = 1");
@@ -105,6 +116,8 @@ function update_gateway_status($selectedGateway)
         $mysqli->query("UPDATE invictuspay SET ativo = 1 WHERE id = 1");
     } elseif ($selectedGateway === 'LYTRONPAY') {
         $mysqli->query("UPDATE lytronpay SET ativo = 1 WHERE id = 1");
+    } elseif ($selectedGateway === 'POSEIDONPAY') {
+        try { $mysqli->query("UPDATE poseidonpay SET ativo = 1 WHERE id = 1"); } catch (Throwable $e) {}
     }
 }
 
@@ -114,23 +127,38 @@ function update_config($data)
 
     if ($data['gateway'] === 'GGPIX') {
         $qry = $mysqli->prepare("UPDATE greepay SET client_id = ? WHERE id = 1");
+        if (!$qry) return false;
         $qry->bind_param("s", $data['client_id']);
         return $qry->execute();
     } elseif ($data['gateway'] === 'IRONPAY') {
         $qry = $mysqli->prepare("UPDATE ironpay SET client_id = ?, url = ? WHERE id = 1");
+        if (!$qry) return false;
         $url = !empty($data['url']) ? $data['url'] : 'https://api.ironpayapp.com.br/api/public/v1';
         $qry->bind_param("ss", $data['client_id'], $url);
         return $qry->execute();
     } elseif ($data['gateway'] === 'INVICTUSPAY') {
         $qry = $mysqli->prepare("UPDATE invictuspay SET client_id = ?, url = ? WHERE id = 1");
+        if (!$qry) return false;
         $url = !empty($data['url']) ? $data['url'] : 'https://api.invictuspay.app.br/api/public/v1';
         $qry->bind_param("ss", $data['client_id'], $url);
         return $qry->execute();
     } elseif ($data['gateway'] === 'LYTRONPAY') {
         $qry = $mysqli->prepare("UPDATE lytronpay SET client_id = ?, client_secret = ?, url = ? WHERE id = 1");
+        if (!$qry) return false;
         $url = !empty($data['url']) ? $data['url'] : 'https://api.lytronpay.com/api/v1';
         $qry->bind_param("sss", $data['client_id'], $data['client_secret'], $url);
         return $qry->execute();
+    } elseif ($data['gateway'] === 'POSEIDONPAY') {
+        try {
+            $qry = $mysqli->prepare("UPDATE poseidonpay SET client_id = ?, client_secret = ? WHERE id = 1");
+            if (!$qry) {
+                return false;
+            }
+            $qry->bind_param("ss", $data['client_id'], $data['client_secret']);
+            return $qry->execute();
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 
     return false;
@@ -146,6 +174,7 @@ function toggle_gateway_status($gateway, $status)
         $mysqli->query("UPDATE ironpay SET ativo = 0 WHERE id = 1");
         $mysqli->query("UPDATE invictuspay SET ativo = 0 WHERE id = 1");
         $mysqli->query("UPDATE lytronpay SET ativo = 0 WHERE id = 1");
+        try { $mysqli->query("UPDATE poseidonpay SET ativo = 0 WHERE id = 1"); } catch (Throwable $e) {}
     }
 
     if ($gateway === 'GGPIX') {
@@ -156,6 +185,12 @@ function toggle_gateway_status($gateway, $status)
         $stmt = $mysqli->prepare("UPDATE invictuspay SET ativo = ? WHERE id = 1");
     } elseif ($gateway === 'LYTRONPAY') {
         $stmt = $mysqli->prepare("UPDATE lytronpay SET ativo = ? WHERE id = 1");
+    } elseif ($gateway === 'POSEIDONPAY') {
+        try {
+            $stmt = $mysqli->prepare("UPDATE poseidonpay SET ativo = ? WHERE id = 1");
+        } catch (Throwable $e) {
+            $stmt = false;
+        }
     } else {
         return false;
     }
@@ -180,6 +215,11 @@ function get_active_gateway($mysqli)
 
     $res = $mysqli->query("SELECT ativo FROM lytronpay WHERE id = 1");
     if ($res && ($row = $res->fetch_assoc()) && $row['ativo'] == 1) return 'LYTRONPAY';
+
+    try {
+        $res = $mysqli->query("SELECT ativo FROM poseidonpay WHERE id = 1");
+        if ($res && ($row = $res->fetch_assoc()) && $row['ativo'] == 1) return 'POSEIDONPAY';
+    } catch (Throwable $e) {}
 
     return 'Nenhum';
 }
@@ -438,6 +478,7 @@ $activeGateway = get_active_gateway($mysqli);
                                         <!-- Controle de Ativação -->
                                         <div class="px-3 pt-3">
                                             <form method="POST" class="d-flex align-items-center">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="toggle_gateway" value="1">
                                                 <input type="hidden" name="gateway_name" value="GGPIX">
                                                 <input type="hidden" name="new_status" value="<?= ($config['greepay']['ativo'] == 1) ? '0' : '1' ?>">
@@ -455,6 +496,7 @@ $activeGateway = get_active_gateway($mysqli);
 
                                         <div class="gateway-form">
                                             <form method="POST" action="" id="formGGPIX">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="gateway" value="GGPIX">
                                                 <div class="mb-3">
                                                     <label class="form-label"><i class="ti ti-key"></i>API Key</label>
@@ -489,6 +531,7 @@ $activeGateway = get_active_gateway($mysqli);
                                         <!-- Controle de Ativação -->
                                         <div class="px-3 pt-3">
                                             <form method="POST" class="d-flex align-items-center">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="toggle_gateway" value="1">
                                                 <input type="hidden" name="gateway_name" value="IRONPAY">
                                                 <input type="hidden" name="new_status" value="<?= (($config['ironpay']['ativo'] ?? 0) == 1) ? '0' : '1' ?>">
@@ -506,6 +549,7 @@ $activeGateway = get_active_gateway($mysqli);
 
                                         <div class="gateway-form">
                                             <form method="POST" action="" id="formIRONPAY">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="gateway" value="IRONPAY">
                                                 <div class="mb-3">
                                                     <label class="form-label"><i class="ti ti-key"></i>API Token / Client ID</label>
@@ -544,6 +588,7 @@ $activeGateway = get_active_gateway($mysqli);
                                         <!-- Controle de Ativação -->
                                         <div class="px-3 pt-3">
                                             <form method="POST" class="d-flex align-items-center">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="toggle_gateway" value="1">
                                                 <input type="hidden" name="gateway_name" value="INVICTUSPAY">
                                                 <input type="hidden" name="new_status" value="<?= (($config['invictuspay']['ativo'] ?? 0) == 1) ? '0' : '1' ?>">
@@ -561,6 +606,7 @@ $activeGateway = get_active_gateway($mysqli);
 
                                         <div class="gateway-form">
                                             <form method="POST" action="" id="formINVICTUSPAY">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="gateway" value="INVICTUSPAY">
                                                 <div class="mb-3">
                                                     <label class="form-label"><i class="ti ti-key"></i>API Token / Client ID</label>
@@ -599,6 +645,7 @@ $activeGateway = get_active_gateway($mysqli);
                                         <!-- Controle de Ativação -->
                                         <div class="px-3 pt-3">
                                             <form method="POST" class="d-flex align-items-center">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="toggle_gateway" value="1">
                                                 <input type="hidden" name="gateway_name" value="LYTRONPAY">
                                                 <input type="hidden" name="new_status" value="<?= (($config['lytronpay']['ativo'] ?? 0) == 1) ? '0' : '1' ?>">
@@ -616,6 +663,7 @@ $activeGateway = get_active_gateway($mysqli);
 
                                         <div class="gateway-form">
                                             <form method="POST" action="" id="formLYTRONPAY">
+                                                <?php $csrf->echoInputField(); ?>
                                                 <input type="hidden" name="gateway" value="LYTRONPAY">
                                                 <div class="mb-3">
                                                     <label class="form-label"><i class="ti ti-key"></i>Api-Access-Key</label>
@@ -647,6 +695,68 @@ $activeGateway = get_active_gateway($mysqli);
                                         </div>
                                     </div>
 
+                                    <!-- POSEIDONPAY -->
+                                    <div class="gateway-card">
+                                        <div class="gateway-header">
+                                            <div class="gateway-title">
+                                                <i class="ti ti-brand-hipchat text-danger"></i>
+                                                <div>
+                                                    <h5 class="gateway-name">POSEIDONPAY</h5>
+                                                    <p class="gateway-description">Gateway PIX PoseidonPay</p>
+                                                </div>
+                                            </div>
+                                            <div class="gateway-status <?= ($activeGateway === 'POSEIDONPAY') ? 'active' : 'inactive' ?>"><?= ($activeGateway === 'POSEIDONPAY') ? admin_t('status_active') : admin_t('status_inactive') ?></div>
+                                        </div>
+
+                                        <!-- Controle de Ativação -->
+                                        <div class="px-3 pt-3">
+                                            <form method="POST" class="d-flex align-items-center">
+                                                <?php $csrf->echoInputField(); ?>
+                                                <input type="hidden" name="toggle_gateway" value="1">
+                                                <input type="hidden" name="gateway_name" value="POSEIDONPAY">
+                                                <input type="hidden" name="new_status" value="<?= (($config['poseidonpay']['ativo'] ?? 0) == 1) ? '0' : '1' ?>">
+
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" role="switch" id="switchPOSEIDONPAY"
+                                                        <?= (($config['poseidonpay']['ativo'] ?? 0) == 1) ? 'checked' : '' ?>
+                                                        onchange="this.form.submit()">
+                                                    <label class="form-check-label" for="switchPOSEIDONPAY">
+                                                        <?= (($config['poseidonpay']['ativo'] ?? 0) == 1) ? admin_t('status_active') : admin_t('status_inactive') ?>
+                                                    </label>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <div class="gateway-form">
+                                            <form method="POST" action="" id="formPOSEIDONPAY">
+                                                <?php $csrf->echoInputField(); ?>
+                                                <input type="hidden" name="gateway" value="POSEIDONPAY">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-key"></i>Public Key (x-public-key)</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="poseidonpay_public_key" name="client_id" class="form-control <?= !$credenciais_desbloqueadas ? 'credencial-bloqueada' : '' ?>" value="<?= htmlspecialchars($config['poseidonpay']['client_id'] ?? '') ?>" required <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                        <?php if ($credenciais_desbloqueadas): ?>
+                                                            <span class="input-group-text" style="cursor: pointer;" onclick="togglePassword('poseidonpay_public_key', this)"><i class="ti ti-eye"></i></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="ti ti-lock"></i>Secret Key (x-secret-key)</label>
+                                                    <div class="input-group">
+                                                        <input type="password" id="poseidonpay_secret_key" name="client_secret" class="form-control <?= !$credenciais_desbloqueadas ? 'credencial-bloqueada' : '' ?>" value="<?= htmlspecialchars($config['poseidonpay']['client_secret'] ?? '') ?>" <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                        <?php if ($credenciais_desbloqueadas): ?>
+                                                            <span class="input-group-text" style="cursor: pointer;" onclick="togglePassword('poseidonpay_secret_key', this)"><i class="ti ti-eye"></i></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+
+                                                <button type="button" class="save-btn" onclick="abrirModal2FASalvar('POSEIDONPAY')" <?= !$credenciais_desbloqueadas ? 'disabled' : '' ?>>
+                                                    <i class="ti ti-device-floppy me-1"></i><?= admin_t('gateway_save_button_prefix') ?> POSEIDONPAY
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
                                 </div> <!-- Fim do grid de gateways -->
                             </div>
                         </div>
@@ -671,6 +781,7 @@ $activeGateway = get_active_gateway($mysqli);
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="POST">
+                    <?php $csrf->echoInputField(); ?>
                     <div class="modal-body">
                         <div class="alert alert-info" role="alert">
                             <i class="ti ti-info-circle me-2"></i>
@@ -739,6 +850,8 @@ $activeGateway = get_active_gateway($mysqli);
                 form = document.getElementById('formINVICTUSPAY');
             } else if (gateway === 'LYTRONPAY') {
                 form = document.getElementById('formLYTRONPAY');
+            } else if (gateway === 'POSEIDONPAY') {
+                form = document.getElementById('formPOSEIDONPAY');
             }
 
             if (form) {

@@ -1,7 +1,7 @@
 <?php include 'partials/html.php' ?>
 
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error.log');
@@ -133,6 +133,7 @@ $rankingTexto = $rankingAtivo ? admin_t('status_active') : admin_t('status_inact
 
                             <div class="card-body">
                                 <form method="POST" action="" id="temaForm">
+                                    <?php $csrf->echoInputField(); ?>
                                     <input type="hidden" name="layout" id="layoutInput" value="<?= htmlspecialchars($template_ativo['layout']) ?>">
                                     <input type="hidden" name="theme" id="themeInput" value="<?= htmlspecialchars($template_ativo['theme']) ?>">
                                     <input type="hidden" name="nome_template" value="<?= htmlspecialchars($template_ativo['nome_template']) ?>">

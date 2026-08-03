@@ -134,6 +134,23 @@ function data_lytronpay()
 	return $data;
 }
 $data_lytronpay = data_lytronpay();
+
+function data_poseidonpay()
+{
+	global $mysqli;
+	try {
+		$qry = "SELECT * FROM poseidonpay WHERE id=1";
+		$res = mysqli_query($mysqli, $qry);
+		if (!$res) {
+			return null;
+		}
+		$data = mysqli_fetch_assoc($res);
+		return $data;
+	} catch (Throwable $e) {
+		return null;
+	}
+}
+$data_poseidonpay = data_poseidonpay();
 #=====================================================#
 
 #=====================================================#
@@ -289,6 +306,7 @@ function data_aurenpay()
 $data_aurenpay = data_aurenpay();
 
 #=====================================================#
+
 function afiliado_de_quem($refer)
 {
 	global $mysqli;

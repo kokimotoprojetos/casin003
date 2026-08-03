@@ -509,6 +509,7 @@ if ($stats_result) {
                                                                     <!-- Formulário de Resposta -->
                                                                     <?php if ($feedback['status'] === 'pending' || $feedback['status'] === 'approved'): ?>
                                                                         <form method="POST" action="">
+                                                                            <?php $csrf->echoInputField(); ?>
                                                                             <input type="hidden" name="feedback_id" value="<?= $feedback['id'] ?>">
                                                                             <input type="hidden" name="action" value="reply">
                                                                             
@@ -534,6 +535,7 @@ if ($stats_result) {
                                                                 <div class="modal-footer">
                                                                     <?php if ($feedback['status'] === 'pending'): ?>
                                                                         <form method="POST" action="" class="d-inline">
+                                                                            <?php $csrf->echoInputField(); ?>
                                                                             <input type="hidden" name="feedback_id" value="<?= $feedback['id'] ?>">
                                                                             <input type="hidden" name="action" value="approve">
                                                                             <button type="submit" class="btn btn-success">
@@ -542,6 +544,7 @@ if ($stats_result) {
                                                                         </form>
                                                                         
                                                                         <form method="POST" action="" class="d-inline">
+                                                                            <?php $csrf->echoInputField(); ?>
                                                                             <input type="hidden" name="feedback_id" value="<?= $feedback['id'] ?>">
                                                                             <input type="hidden" name="action" value="reject">
                                                                             <button type="submit" class="btn btn-danger" 
@@ -553,6 +556,7 @@ if ($stats_result) {
                                                                     
                                                                     <?php if ($feedback['status'] !== 'closed'): ?>
                                                                         <form method="POST" action="" class="d-inline">
+                                                                            <?php $csrf->echoInputField(); ?>
                                                                             <input type="hidden" name="feedback_id" value="<?= $feedback['id'] ?>">
                                                                             <input type="hidden" name="action" value="close">
                                                                             <button type="submit" class="btn btn-secondary">

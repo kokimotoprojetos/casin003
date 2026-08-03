@@ -145,9 +145,9 @@ checa_login_adm();
         function showToast(type, message){window.showToast(type,message);}
     </script>
 
-    <?php if ($toastType && $toastMessage): ?>
+    <?php if (!empty($toastType) && !empty($toastMessage)): ?>
         <script>
-            showToast('<?= $toastType ?>', '<?= $toastMessage ?>');
+            showToast('<?= htmlspecialchars($toastType, ENT_QUOTES) ?>', '<?= htmlspecialchars($toastMessage, ENT_QUOTES) ?>');
         </script>
     <?php endif; ?>
 

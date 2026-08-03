@@ -23,7 +23,7 @@ function get_coupons($limit, $offset)
     $qry = "SELECT * FROM cupom ORDER BY id DESC LIMIT $limit OFFSET $offset";
     $result = mysqli_query($mysqli, $qry);
     $coupons = [];
-    while ($row = mysqli_fetch_assoc($result)) {
+    while ($result && ($row = mysqli_fetch_assoc($result))) {
         $coupons[] = $row;
     }
     return $coupons;
@@ -34,13 +34,15 @@ function count_coupons()
     global $mysqli;
     $qry = "SELECT COUNT(*) as total FROM cupom";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 function add_coupon($data)
 {
     global $mysqli;
     $qry = $mysqli->prepare("INSERT INTO cupom (nome, valor, qtd_insert, range_valor, status) VALUES (?, 0, ?, ?, ?)");
+    if (!$qry) return false;
     $qry->bind_param("sisi", $data['nome'], $data['qtd_insert'], $data['range_valor'], $data['status']);
     return $qry->execute();
 }
@@ -54,6 +56,7 @@ function update_coupon($data)
         range_valor = ?, 
         status = ? 
         WHERE id = ?");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "sisii",
@@ -70,6 +73,7 @@ function delete_coupon($id)
 {
     global $mysqli;
     $qry = $mysqli->prepare("DELETE FROM cupom WHERE id = ?");
+    if (!$qry) return false;
     $qry->bind_param("i", $id);
     return $qry->execute();
 }
@@ -134,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     
     global $mysqli;
     $qry = $mysqli->prepare("UPDATE cupom SET status = ? WHERE id = ?");
+    if (!$qry) { return; }
     $qry->bind_param("ii", $status, $id);
     
     if ($qry->execute()) {
@@ -205,6 +210,7 @@ $coupons = get_coupons($limit, $offset);
                                                         <td><strong><?= htmlspecialchars($coupon['range_valor']) ?></strong></td>
                                                         <td>
                                                             <form method="POST" action="" class="d-inline" id="form-status-<?= $coupon['id'] ?>">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <div class="form-check form-switch">
                                                                     <input class="form-check-input" type="checkbox" 
                                                                            id="status-toggle-<?= $coupon['id'] ?>" 
@@ -237,6 +243,7 @@ $coupons = get_coupons($limit, $offset);
                                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                 </div>
                                                                 <form method="POST" action="">
+                                                                    <?php $csrf->echoInputField(); ?>
                                                                     <div class="modal-body">
                                         <div class="mb-3">
                                             <label for="nome" class="form-label">Nome do Cupom</label>
@@ -282,6 +289,7 @@ $coupons = get_coupons($limit, $offset);
                                                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                 </div>
                                                                 <form method="POST" action="">
+                                                                    <?php $csrf->echoInputField(); ?>
                                                                     <div class="modal-body">
                                                                         <p>Tem certeza que deseja excluir o bônus <strong><?= htmlspecialchars($coupon['nome']) ?></strong>?</p>
                                                                         <p class="text-danger"><strong>Esta ação não pode ser desfeita!</strong></p>
@@ -335,6 +343,7 @@ $coupons = get_coupons($limit, $offset);
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="POST" action="">
+                    <?php $csrf->echoInputField(); ?>
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="nome" class="form-label">Nome do Cupom</label>

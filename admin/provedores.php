@@ -27,7 +27,7 @@ function get_providers($limit, $offset)
     $qry = "SELECT * FROM provedores LIMIT $limit OFFSET $offset";
     $result = mysqli_query($mysqli, $qry);
     $providers = [];
-    while ($row = mysqli_fetch_assoc($result)) {
+    while ($result && ($row = mysqli_fetch_assoc($result))) {
         $providers[] = $row;
     }
     return $providers;
@@ -39,7 +39,8 @@ function count_providers()
     global $mysqli;
     $qry = "SELECT COUNT(*) as total FROM provedores";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 # Função para atualizar os dados do provedor
@@ -52,6 +53,7 @@ function update_provider($data)
         type = ?, 
         status = ? 
         WHERE id = ?");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "sssii",
@@ -170,6 +172,7 @@ $providers = get_providers($limit, $offset);
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <form method="POST" action="">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <div class="modal-body">
                                                                     <div class="mb-3">
                                                                         <label for="code" class="form-label">Código</label>

@@ -31,7 +31,8 @@ function get_numero_jackpot_atual()
     global $mysqli;
     $qry = "SELECT numero_jackpot FROM config WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['numero_jackpot'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['numero_jackpot'] : 0;
 }
 
 # Função para atualizar o numero_jackpot no banco de dados
@@ -39,6 +40,7 @@ function update_numero_jackpot($numero_jackpot)
 {
     global $mysqli;
     $qry = $mysqli->prepare("UPDATE config SET numero_jackpot = ? WHERE id = 1");
+    if (!$qry) return false;
     $qry->bind_param("i", $numero_jackpot);
     return $qry->execute();
 }
@@ -106,6 +108,7 @@ $numero_jackpot_atual = get_numero_jackpot_atual();
 
                             <div class="card-body">
                                 <form method="POST" action="" enctype="multipart/form-data">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row">
                                         <?php
                                         // Exibir 24 imagens de numero_jackpots para seleção

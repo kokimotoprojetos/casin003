@@ -1,6 +1,6 @@
 <?php include 'partials/html.php' ?>
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 session_start();
 include_once "services/database.php";
@@ -46,6 +46,7 @@ function update_promotion_config($data)
     $check = mysqli_query($mysqli, "SELECT id FROM promotion_1867_config LIMIT 1");
     if (mysqli_num_rows($check) == 0) {
         $qry = $mysqli->prepare("INSERT INTO promotion_1867_config (target_amount, manipulation1, gain1, manipulation2, gain2, manipulation3) VALUES (?, ?, ?, ?, ?, ?)");
+        if (!$qry) return false;
         $qry->bind_param("dddddd", 
             $data['target_amount'], 
             $data['manipulation1'], $data['gain1'],
@@ -54,6 +55,7 @@ function update_promotion_config($data)
         );
     } else {
         $qry = $mysqli->prepare("UPDATE promotion_1867_config SET target_amount = ?, manipulation1 = ?, gain1 = ?, manipulation2 = ?, gain2 = ?, manipulation3 = ?");
+        if (!$qry) return false;
         $qry->bind_param("dddddd", 
             $data['target_amount'], 
             $data['manipulation1'], $data['gain1'],
@@ -112,6 +114,7 @@ $config = get_promotion_config();
 
                             <div class="card-body p-4">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row g-4">
                                         
                                         <!-- Target Amount -->

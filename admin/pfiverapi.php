@@ -21,7 +21,9 @@ function get_playfiver_config()
     global $mysqli;
     $qry = "SELECT * FROM playfiver WHERE id = 1";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result);
+    if (!$result) return null;
+    $data = mysqli_fetch_assoc($result);
+    return $data !== false ? $data : null;
 }
 
 function update_playfiver_config($data)
@@ -35,6 +37,7 @@ function update_playfiver_config($data)
         proxy = ?,
         ativo = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "sssssi",
@@ -101,6 +104,7 @@ $playfiver_config = get_playfiver_config();
                             </div>
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <input type="hidden" name="update_playfiver">
                                     <!-- Campos de Configuração playfiver -->
                                     <div class="row">
@@ -109,7 +113,7 @@ $playfiver_config = get_playfiver_config();
                                             <div class="card mb-4">
                                                 <div class="card-body">
                                                     <h5 class="card-title">URL da API</h5>
-                                                    <input type="text" name="url_playfiver" class="form-control" value="<?= $playfiver_config['url'] ?>" required>
+                                                    <input type="text" name="url_playfiver" class="form-control" value="<?= $playfiver_config['url'] ?? '' ?>" required>
                                                 </div>
                                             </div>
                                         </div>
@@ -119,7 +123,7 @@ $playfiver_config = get_playfiver_config();
                                                 <div class="card-body">
                                                     <h5 class="card-title">ID Único / Código do Agente (Agent Code)</h5>
                                                     <div class="input-group">
-                                                        <input type="text" id="agent_code_playfiver" name="agent_code_playfiver" class="form-control" value="<?= $playfiver_config['agent_code'] ?>" required>
+                                                        <input type="text" id="agent_code_playfiver" name="agent_code_playfiver" class="form-control" value="<?= $playfiver_config['agent_code'] ?? '' ?>" required>
                                                     </div>
                                                 </div>
                                             </div>
@@ -130,7 +134,7 @@ $playfiver_config = get_playfiver_config();
                                                 <div class="card-body">
                                                     <h5 class="card-title">Token do Agente (Agent Token)</h5>
                                                     <div class="input-group">
-                                                        <input type="password" id="agent_token_playfiver" name="agent_token_playfiver" class="form-control" value="<?= $playfiver_config['agent_token'] ?>" required>
+                                                        <input type="password" id="agent_token_playfiver" name="agent_token_playfiver" class="form-control" value="<?= $playfiver_config['agent_token'] ?? '' ?>" required>
                                                         <span class="input-group-text"
                                                             onclick="togglePassword('agent_token_playfiver', this)">
                                                             <i class="fas fa-eye"></i>
@@ -145,7 +149,7 @@ $playfiver_config = get_playfiver_config();
                                                 <div class="card-body">
                                                     <h5 class="card-title">Chave Secreta (Secret Key)</h5>
                                                     <div class="input-group">
-                                                        <input type="password" id="agent_secret_playfiver" name="agent_secret_playfiver" class="form-control" value="<?= $playfiver_config['agent_secret'] ?>" required>
+                                                        <input type="password" id="agent_secret_playfiver" name="agent_secret_playfiver" class="form-control" value="<?= $playfiver_config['agent_secret'] ?? '' ?>" required>
                                                         <span class="input-group-text"
                                                             onclick="togglePassword('agent_secret_playfiver', this)">
                                                             <i class="fas fa-eye"></i>
@@ -171,8 +175,8 @@ $playfiver_config = get_playfiver_config();
                                                 <div class="card-body">
                                                     <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>
                                                     <select name="ativo_playfiver" class="form-select" required>
-                                                        <option value="1" <?= $playfiver_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>
-                                                        <option value="0" <?= $playfiver_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>
+                                                        <option value="1" <?= ($playfiver_config['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>Sim</option>
+                                                        <option value="0" <?= ($playfiver_config['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>Não</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -196,13 +200,14 @@ $playfiver_config = get_playfiver_config();
                                 </div>
                                 <div class="card-body">
                                     <form method="POST" action="">
+                                        <?php $csrf->echoInputField(); ?>
                                         <input type="hidden" name="update_beeplay">
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="card mb-4">
                                                     <div class="card-body">
                                                         <h5 class="card-title">URL</h5>
-                                                        <input type="text" name="url_beeplay" class="form-control" value="<?= $beeplay_config['url'] ?>" required>
+                                                        <input type="text" name="url_beeplay" class="form-control" value="<?= $beeplay_config['url'] ?? '' ?>" required>
                                                     </div>
                                                 </div>
                                             </div>
@@ -212,7 +217,7 @@ $playfiver_config = get_playfiver_config();
                                                     <div class="card-body">
                                                         <h5 class="card-title">Agent Token</h5>
                                                         <div class="input-group">
-                                                        <input type="password" id="agent_code_beeplay" name="agent_code_beeplay" class="form-control" value="<?= $beeplay_config['agent_code'] ?>" required>
+                                                        <input type="password" id="agent_code_beeplay" name="agent_code_beeplay" class="form-control" value="<?= $beeplay_config['agent_code'] ?? '' ?>" required>
                                                             <span class="input-group-text"
                                                                 onclick="togglePassword('agent_code_beeplay', this)">
                                                                 <i class="fas fa-eye"></i>
@@ -227,7 +232,7 @@ $playfiver_config = get_playfiver_config();
                                                     <div class="card-body">
                                                         <h5 class="card-title">Agent Secret</h5>
                                                         <div class="input-group">
-                                                        <input type="password" id="agent_token_beeplay" name="agent_token_beeplay" class="form-control" value="<?= $beeplay_config['agent_token'] ?>" required>
+                                                        <input type="password" id="agent_token_beeplay" name="agent_token_beeplay" class="form-control" value="<?= $beeplay_config['agent_token'] ?? '' ?>" required>
                                                             <span class="input-group-text"
                                                                 onclick="togglePassword('agent_token_beeplay', this)">
                                                                 <i class="fas fa-eye"></i>
@@ -242,8 +247,8 @@ $playfiver_config = get_playfiver_config();
                                                     <div class="card-body">
                                                         <h5 class="card-title"><i class="iconoir-check-circle"></i> Ativo</h5>
                                                         <select name="ativo_beeplay" class="form-select" required>
-                                                            <option value="1" <?= $beeplay_config['ativo'] == 1 ? 'selected' : '' ?>>Sim</option>
-                                                            <option value="0" <?= $beeplay_config['ativo'] == 0 ? 'selected' : '' ?>>Não</option>
+                                                            <option value="1" <?= ($beeplay_config['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>Sim</option>
+                                                            <option value="0" <?= ($beeplay_config['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>Não</option>
                                                         </select>
     
                                                     </div>

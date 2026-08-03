@@ -36,6 +36,7 @@ function get_modais() {
 function add_modal($data) {
     global $mysqli;
     $stmt = $mysqli->prepare("INSERT INTO modais (announcementType, content, imgType, imgUrl, popupMethod, title, type, value, valueType, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$stmt) return false;
     $active = 1;
     $stmt->bind_param("sssssssssi", 
         $data['announcementType'], 
@@ -55,6 +56,7 @@ function add_modal($data) {
 function update_modal($data) {
     global $mysqli;
     $stmt = $mysqli->prepare("UPDATE modais SET announcementType=?, content=?, imgType=?, imgUrl=?, popupMethod=?, title=?, type=?, value=?, valueType=?, active=? WHERE id=?");
+    if (!$stmt) return false;
     $stmt->bind_param("sssssssssii", 
         $data['announcementType'], 
         $data['content'], 
@@ -74,6 +76,7 @@ function update_modal($data) {
 function delete_modal($id) {
     global $mysqli;
     $stmt = $mysqli->prepare("DELETE FROM modais WHERE id=?");
+    if (!$stmt) return false;
     $stmt->bind_param("i", $id);
     return $stmt->execute();
 }
@@ -269,6 +272,7 @@ $modais = get_modais();
                                                             <i class="fas fa-edit"></i>
                                                         </button>
                                                         <form method="POST" action="" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir?');">
+                                                            <?php $csrf->echoInputField(); ?>
                                                             <input type="hidden" name="action" value="delete_modal">
                                                             <input type="hidden" name="id" value="<?= $modal['id'] ?>">
                                                             <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
@@ -300,6 +304,7 @@ $modais = get_modais();
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="POST" action="" enctype="multipart/form-data">
+                    <?php $csrf->echoInputField(); ?>
                     <input type="hidden" name="action" value="add_modal">
                     <div class="modal-body">
                         <div class="row">
@@ -367,6 +372,7 @@ $modais = get_modais();
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="POST" action="" enctype="multipart/form-data">
+                    <?php $csrf->echoInputField(); ?>
                     <input type="hidden" name="action" value="edit_modal">
                     <input type="hidden" name="id" id="edit_id">
                     <input type="hidden" name="existingImgUrl" id="edit_existingImgUrl">

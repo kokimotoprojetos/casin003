@@ -1,112 +1,129 @@
 <?php
 /**
- * A simple CSRF class to protect forms against CSRF attacks. The class uses
- * PHP sessions for storage.
- * 
- * @author Raahul Seshadri
+ * CSRF protection class.
  *
+ * Uses PHP sessions for token storage. Tokens are generated with
+ * cryptographically secure random bytes and compared with hash_equals
+ * (timing-safe). verifyRequest() returns bool and logs failures instead
+ * of die()ing, so callers can decide how to react.
  */
 class CSRF_Protect
 {
-	/**
-	 * The namespace for the session variable and form inputs
-	 * @var string
-	 */
+	/** @var string */
 	private $namespace;
-	
-	/**
-	 * Initializes the session variable name, starts the session if not already so,
-	 * and initializes the token
-	 * 
-	 * @param string $namespace
-	 */
+
 	public function __construct($namespace = '_csrf')
 	{
 		$this->namespace = $namespace;
-		
-		if (session_id() === '')
-		{
+
+		if (session_status() === PHP_SESSION_NONE) {
 			session_start();
 		}
-		
+
 		$this->setToken();
 	}
-	
+
 	/**
-	 * Return the token from persistent storage
-	 * 
 	 * @return string
 	 */
 	public function getToken()
 	{
 		return $this->readTokenFromStorage();
 	}
-	
+
 	/**
-	 * Verify if supplied token matches the stored token
-	 * 
+	 * Timing-safe token comparison.
+	 *
 	 * @param string $userToken
-	 * @return boolean
+	 * @return bool
 	 */
 	public function isTokenValid($userToken)
 	{
-		return ($userToken === $this->readTokenFromStorage());
+		$stored = $this->readTokenFromStorage();
+		if ($stored === '' || !is_string($userToken) || $userToken === '') {
+			return false;
+		}
+		return hash_equals($stored, $userToken);
 	}
-	
+
 	/**
-	 * Echoes the HTML input field with the token, and namespace as the
-	 * name of the field
+	 * Echoes the HTML hidden input with the token. Value is HTML-escaped.
 	 */
 	public function echoInputField()
 	{
 		$token = $this->getToken();
-		echo "<input type=\"hidden\" name=\"{$this->namespace}\" value=\"{$token}\" />";
+		$ns = htmlspecialchars($this->namespace, ENT_QUOTES, 'UTF-8');
+		$val = htmlspecialchars($token, ENT_QUOTES, 'UTF-8');
+		echo "<input type=\"hidden\" name=\"{$ns}\" value=\"{$val}\" />";
 	}
-	
+
 	/**
-	 * Verifies whether the post token was set, else dies with error
+	 * Returns the HTML hidden input as a string ( handy for templates ).
+	 *
+	 * @return string
+	 */
+	public function renderInputField()
+	{
+		$token = $this->getToken();
+		$ns = htmlspecialchars($this->namespace, ENT_QUOTES, 'UTF-8');
+		$val = htmlspecialchars($token, ENT_QUOTES, 'UTF-8');
+		return "<input type=\"hidden\" name=\"{$ns}\" value=\"{$val}\" />";
+	}
+
+	/**
+	 * Verify the current request ( POST only ). Returns true if the request
+	 * is safe to proceed: either it is not a POST, or the token matches.
+	 * On failure, logs a warning with the calling script and returns false.
+	 *
+	 * @return bool
 	 */
 	public function verifyRequest()
 	{
-		if (!$this->isTokenValid($_POST[$this->namespace]))
-		{
-			die("CSRF validation failed.");
+		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+			return true;
 		}
+		$userToken = isset($_POST[$this->namespace]) ? $_POST[$this->namespace] : '';
+		if ($this->isTokenValid($userToken)) {
+			return true;
+		}
+		$script = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
+		error_log('CSRF validation failed for ' . $script . ' from ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+		return false;
 	}
-	
+
 	/**
-	 * Generates a new token value and stores it in persisent storage, or else
-	 * does nothing if one already exists in persisent storage
+	 * Generate a new token if none exists.
 	 */
 	private function setToken()
 	{
 		$storedToken = $this->readTokenFromStorage();
-		
-		if ($storedToken === '')
-		{
-			$token = md5(uniqid(rand(), TRUE));
+		if ($storedToken === '') {
+			$token = $this->generateToken();
 			$this->writeTokenToStorage($token);
 		}
 	}
-	
+
 	/**
-	 * Reads token from persistent sotrage
+	 * @return string 64-char hex token
+	 */
+	private function generateToken()
+	{
+		$bytes = function_exists('random_bytes')
+			? random_bytes(32)
+			: (function_exists('openssl_random_pseudo_bytes') ? openssl_random_pseudo_bytes(32) : md5(uniqid((string)mt_rand(), true)));
+		return bin2hex($bytes);
+	}
+
+	/**
 	 * @return string
 	 */
 	private function readTokenFromStorage()
 	{
-		if (isset($_SESSION[$this->namespace]))
-		{
-			return $_SESSION[$this->namespace];
-		}
-		else
-		{
-			return '';
-		}
+		return isset($_SESSION[$this->namespace]) ? (string)$_SESSION[$this->namespace] : '';
 	}
-	
+
 	/**
-	 * Writes token to persistent storage
+	 * @param string $token
 	 */
 	private function writeTokenToStorage($token)
 	{

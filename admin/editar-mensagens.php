@@ -46,6 +46,7 @@ function insert_banner($titulo, $content, $banner, $status, $texto)
     global $mysqli;
 
     $qry = $mysqli->prepare("INSERT INTO mensagens (titulo, content, banner, status, texto) VALUES (?, ?, ?, ?, ?)");
+    if (!$qry) return false;
     $qry->bind_param("sssii", $titulo, $content, $banner, $status, $texto);
 
     return $qry->execute();
@@ -59,10 +60,12 @@ function update_banner($id, $titulo, $content, $status = null, $banner = null, $
     # Verificar se a imagem foi enviada
     if ($banner !== null) {
         $qry = $mysqli->prepare("UPDATE mensagens SET titulo = ?, content = ?, banner = ?, status = ?, texto = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("sssiii", $titulo, $content, $banner, $status, $texto, $id);
     } else {
         # Se não houver imagem, apenas atualiza o título, conteúdo e status
         $qry = $mysqli->prepare("UPDATE mensagens SET titulo = ?, content = ?, status = ?, texto = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("ssiii", $titulo, $content, $status, $texto, $id);
     }
 
@@ -80,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $query = "SELECT banner FROM mensagens WHERE id = ?";
         $stmt = $mysqli->prepare($query);
+        if (!$stmt) { return; }
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -231,6 +235,7 @@ $banners = get_banners();
                                                         </div>
                                                         <div class="modal-body">
                                                             <form method="POST" enctype="multipart/form-data">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <input type="hidden" name="id" value="<?= $banner['id']; ?>">
                                                                 <div class="mb-3">
                                                                     <label for="titulo" class="form-label">Título</label>
@@ -277,6 +282,7 @@ $banners = get_banners();
                                                         </div>
                                                         <div class="modal-body">
                                                             <form method="POST" enctype="multipart/form-data">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <div class="mb-3">
                                                                     <label for="titulo" class="form-label">Título</label>
                                                                     <input type="text" class="form-control" name="titulo" required>

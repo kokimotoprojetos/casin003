@@ -38,9 +38,11 @@ function update_banner($id, $titulo, $status, $img = null, $redirect_url = null)
 
     if ($img) {
         $qry = $mysqli->prepare("UPDATE popups SET titulo = ?, status = ?, img = ?, redirect_url = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("sissi", $titulo, $status, $img, $redirect_url, $id);
     } else {
         $qry = $mysqli->prepare("UPDATE popups SET titulo = ?, status = ?, redirect_url = ? WHERE id = ?");
+        if (!$qry) return false;
         $qry->bind_param("sisi", $titulo, $status, $redirect_url, $id);
     }
 
@@ -55,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $query = "SELECT img FROM popups WHERE id = ?";
     $stmt = $mysqli->prepare($query);
+    if (!$stmt) { return; }
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -158,6 +161,7 @@ $banners = get_banners();
                                                         </div>
                                                         <div class="modal-body">
                                                             <form method="POST" enctype="multipart/form-data">
+                                                                <?php $csrf->echoInputField(); ?>
                                                                 <input type="hidden" name="id" value="<?= $banner['id']; ?>">
                                                                 <div class="mb-3">
                                                                     <label for="titulo" class="form-label">Título</label>

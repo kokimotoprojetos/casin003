@@ -45,6 +45,7 @@ function update_afiliados_config($data)
         minDepForCpa = ?, 
         minResgate = ? 
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "dddddddddd",
@@ -67,16 +68,16 @@ $toastMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'cpaLvl1' => floatval($_POST['cpaLvl1']),
-        'cpaLvl2' => floatval($_POST['cpaLvl2']),
-        'cpaLvl3' => floatval($_POST['cpaLvl3']),
-        'chanceCpa' => floatval($_POST['chanceCpa']),
-        'revShareFalso' => floatval($_POST['revShareFalso']),
-        'revShareLvl1' => floatval($_POST['revShareLvl1']),
-        'revShareLvl2' => floatval($_POST['revShareLvl2']),
-        'revShareLvl3' => floatval($_POST['revShareLvl3']),
-        'minDepForCpa' => floatval($_POST['minDepForCpa']),
-        'minResgate' => floatval($_POST['minResgate']),
+        'cpaLvl1' => floatval($_POST['cpaLvl1'] ?? 0),
+        'cpaLvl2' => floatval($_POST['cpaLvl2'] ?? 0),
+        'cpaLvl3' => floatval($_POST['cpaLvl3'] ?? 0),
+        'chanceCpa' => floatval($_POST['chanceCpa'] ?? 0),
+        'revShareFalso' => floatval($_POST['revShareFalso'] ?? 0),
+        'revShareLvl1' => floatval($_POST['revShareLvl1'] ?? 0),
+        'revShareLvl2' => floatval($_POST['revShareLvl2'] ?? 0),
+        'revShareLvl3' => floatval($_POST['revShareLvl3'] ?? 0),
+        'minDepForCpa' => floatval($_POST['minDepForCpa'] ?? 0),
+        'minResgate' => floatval($_POST['minResgate'] ?? 0),
     ];
 
     if (update_afiliados_config($data)) {
@@ -116,6 +117,7 @@ $config = get_afiliados_config();
 
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row">
                                         <!-- CPA Level 1 -->
                                         <div class="col-md-4">

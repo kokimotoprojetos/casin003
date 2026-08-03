@@ -284,7 +284,25 @@ function data_aurenpay()
 }
 $data_aurenpay = data_aurenpay();
 
+function data_poseidonpay()
+{
+	global $mysqli;
+	try {
+		$qry = "SELECT * FROM poseidonpay WHERE id=1";
+		$res = mysqli_query($mysqli, $qry);
+		if (!$res) {
+			return null;
+		}
+		$data = mysqli_fetch_assoc($res);
+		return $data;
+	} catch (Throwable $e) {
+		return null;
+	}
+}
+$data_poseidonpay = data_poseidonpay();
+
 #=====================================================#
+
 function afiliado_de_quem($refer)
 {
 	global $mysqli;
@@ -558,9 +576,9 @@ function saldo_user_pix($id)
 
 function consultarSaldoAgente($email)
 {
-    global $data_fiverscanpanel;
-    $keys = $data_fiverscanpanel;
-    
+    global $data_playfiver;
+    $keys = $data_playfiver;
+
     $dataRequest = array(
         "agentToken" => $keys['agent_code'],
         "secretKey" => $keys['agent_token'],
@@ -569,7 +587,7 @@ function consultarSaldoAgente($email)
     $json_data = json_encode($dataRequest);
 
     $url = 'https://api.playfivers.com/api/v2/balance';
-    $response = enviarRequest($url, $json_data);
+    $response = enviarRequestPlayFiver($url, $json_data, $keys['proxy'] ?? null);
 
     $data = json_decode($response, true);
 
@@ -946,10 +964,14 @@ function total_REV_id($id)
 function data_user_id($id)
 {
 	global $mysqli;
-	$qry = "SELECT * FROM usuarios WHERE id='" . $id . "'";
+	$safe_id = mysqli_real_escape_string($mysqli, (string)$id);
+	$qry = "SELECT * FROM usuarios WHERE id='" . $safe_id . "' LIMIT 1";
 	$res = mysqli_query($mysqli, $qry);
+	if (!$res) {
+		return false;
+	}
 	$data = mysqli_fetch_assoc($res);
-	return $data;
+	return $data ? $data : false;
 }
 
 function distribution($code) {
@@ -1432,19 +1454,27 @@ function gameapi($id)
 function localizarchavepix($id)
 {
 	global $mysqli;
-	$qry = "SELECT chave, tipo, cpf, realname FROM metodos_pagamentos WHERE chave='" . $id . "'";
+	$safe_id = mysqli_real_escape_string($mysqli, (string)$id);
+	$qry = "SELECT chave, tipo, cpf, realname FROM metodos_pagamentos WHERE chave='" . $safe_id . "' LIMIT 1";
 	$res = mysqli_query($mysqli, $qry);
+	if (!$res) {
+		return false;
+	}
 	$data = mysqli_fetch_assoc($res);
-	return $data;
+	return $data ? $data : false;
 }
 
 function localizarchavepix2($id)
 {
 	global $mysqli;
-	$qry = "SELECT chave, tipo, cpf, realname FROM metodos_pagamentos WHERE id='" . $id . "'";
+	$safe_id = mysqli_real_escape_string($mysqli, (string)$id);
+	$qry = "SELECT chave, tipo, cpf, realname FROM metodos_pagamentos WHERE id='" . $safe_id . "' LIMIT 1";
 	$res = mysqli_query($mysqli, $qry);
+	if (!$res) {
+		return false;
+	}
 	$data = mysqli_fetch_assoc($res);
-	return $data;
+	return $data ? $data : false;
 }
 
 

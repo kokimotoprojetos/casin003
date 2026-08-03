@@ -32,7 +32,9 @@ function getEquipe($mysqli, $invite_code, $nivel = 1) {
         $stmt_dep = $mysqli->prepare("SELECT SUM(valor) as total FROM transacoes WHERE usuario = ? AND status = 'pago'");
         $stmt_dep->bind_param("i", $row['id']);
         $stmt_dep->execute();
-        $row['total_dep'] = $stmt_dep->get_result()->fetch_assoc()['total'] ?? 0;
+        $depResult = $stmt_dep->get_result();
+        $depRow = $depResult ? $depResult->fetch_assoc() : null;
+        $row['total_dep'] = $depRow ? (int)$depRow['total'] : 0;
         
         $row['nivel'] = $nivel;
         $row['sub'] = getEquipe($mysqli, $row['invite_code'], $nivel + 1);
@@ -87,7 +89,7 @@ include 'partials/html.php';
                                 <?php if ($agente_data): ?>
                                     <div class="alert alert-info mb-4">
                                         <strong>Agente Selecionado:</strong> <?= htmlspecialchars($agente_data['mobile']) ?> (ID: <?= $agente_data['id'] ?>) | 
-                                        <strong>Invite Code:</strong> <?= $agente_data['invite_code'] ?>
+                                        <strong>Invite Code:</strong> <?= htmlspecialchars($agente_data['invite_code']) ?>
                                     </div>
 
                                     <div class="table-responsive">

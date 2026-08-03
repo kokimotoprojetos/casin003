@@ -1,6 +1,6 @@
 <?php include 'partials/html.php' ?>
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 session_start();
 include_once "services/database.php";
@@ -44,12 +44,14 @@ function update_checkin_config($data)
     $check = mysqli_query($mysqli, "SELECT id FROM checkin_config LIMIT 1");
     if (mysqli_num_rows($check) == 0) {
         $qry = $mysqli->prepare("INSERT INTO checkin_config (dep_on, dep, aposta_on, aposta, day1_prize, day2_prize, day3_prize, day4_prize, day5_prize, day6_prize, day7_prize) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if (!$qry) return false;
         $qry->bind_param("ididddddddd", 
             $data['dep_on'], $data['dep'], $data['aposta_on'], $data['aposta'],
             $data['day1_prize'], $data['day2_prize'], $data['day3_prize'], $data['day4_prize'], $data['day5_prize'], $data['day6_prize'], $data['day7_prize']
         );
     } else {
         $qry = $mysqli->prepare("UPDATE checkin_config SET dep_on = ?, dep = ?, aposta_on = ?, aposta = ?, day1_prize = ?, day2_prize = ?, day3_prize = ?, day4_prize = ?, day5_prize = ?, day6_prize = ?, day7_prize = ?");
+        if (!$qry) return false;
         $qry->bind_param("ididddddddd", 
             $data['dep_on'], $data['dep'], $data['aposta_on'], $data['aposta'],
             $data['day1_prize'], $data['day2_prize'], $data['day3_prize'], $data['day4_prize'], $data['day5_prize'], $data['day6_prize'], $data['day7_prize']
@@ -111,6 +113,7 @@ $config = get_checkin_config();
 
                             <div class="card-body p-4">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row g-4 mb-4">
                                         <!-- Depósito Obrigatório -->
                                         <div class="col-md-6">

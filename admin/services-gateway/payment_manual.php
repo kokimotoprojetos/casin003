@@ -475,6 +475,44 @@ class MultiGatewayProcessor
     }
     
     /**
+     * Buscar credenciais PoseidonPay
+     */
+    public function getPoseidonPayCredentials()
+    {
+        $this->addStep('get_poseidonpay_creds', ['action' => 'start']);
+        
+        $sql = "SELECT * FROM poseidonpay WHERE ativo = 1 LIMIT 1";
+        try {
+            $result = $this->mysqli->query($sql);
+        } catch (Throwable $e) {
+            $this->debug[] = "PoseidonPay: Tabela não disponível";
+            $this->addStep('get_poseidonpay_creds', ['success' => false, 'reason' => 'table_missing']);
+            logToDaanrox("PoseidonPay: Tabela não disponível", [], 'CONFIG');
+            return null;
+        }
+        
+        if ($result && $result->num_rows > 0) {
+            $config = $result->fetch_assoc();
+            if (!empty($config['client_id']) && !empty($config['client_secret'])) {
+                $this->debug[] = "PoseidonPay: Credenciais encontradas e ativas";
+                $this->addStep('get_poseidonpay_creds', ['success' => true, 'config' => $config['client_id']]);
+                
+                logToDaanrox("PoseidonPay: Credenciais obtidas", [
+                    'client_id' => substr($config['client_id'], 0, 10) . '...'
+                ], 'CONFIG');
+                
+                return $config;
+            }
+        }
+        
+        $this->debug[] = "PoseidonPay: Nenhuma credencial ativa encontrada";
+        $this->addStep('get_poseidonpay_creds', ['success' => false, 'reason' => 'no_credentials']);
+        logToDaanrox("PoseidonPay: Sem credenciais ativas", [], 'CONFIG');
+        
+        return null;
+    }
+    
+    /**
      * Processar saque via GreePay
      */
     public function processGreePay($config, $transacao_id, $valor, $chavepix, $cpf, $nome_real)
@@ -1126,6 +1164,116 @@ public function processBSPay($config, $transacao_id, $valor, $chavepix, $cpf, $n
     }
     
     /**
+     * Processar saque via PoseidonPay
+     * Auth: x-public-key + x-secret-key
+     */
+    public function processPoseidonPay($config, $transacao_id, $valor, $chavepix, $cpf, $nome_real)
+    {
+        $step_id = 'process_poseidonpay_' . $transacao_id;
+        $this->addStep($step_id, ['action' => 'start', 'valor' => $valor]);
+        
+        if (empty($config['client_id']) || empty($config['client_secret'])) {
+            $error = 'PoseidonPay: Credenciais não configuradas';
+            $this->addStep($step_id, ['success' => false, 'error' => $error]);
+            logError('PoseidonPay', $error, ['config' => array_keys($config)]);
+            return ['success' => false, 'message' => $error];
+        }
+        
+        $tipo_chave = identificarTipoChavePix($chavepix);
+        $pix_key_type_map = [
+            'document' => 'CPF',
+            'phoneNumber' => 'PHONE',
+            'email' => 'EMAIL',
+            'randomKey' => 'EVP'
+        ];
+        
+        $external_id = 'SAQ-' . $transacao_id . '-' . time();
+        
+        $payload = [
+            "identifier" => $external_id,
+            "amount" => (float)$valor,
+            "client" => [
+                "name" => $nome_real ?: 'Cliente',
+                "document" => preg_replace('/[^0-9]/', '', $cpf),
+                "keypix" => $chavepix,
+                "keypix_type" => $pix_key_type_map[$tipo_chave] ?? 'CPF'
+            ],
+            "description" => "Saque processado - ID: " . $transacao_id
+        ];
+        
+        $url = 'https://app.poseidonpay.site/api/v1/gateway/pix/send';
+        $headers = [
+            'x-public-key: ' . $config['client_id'],
+            'x-secret-key: ' . $config['client_secret'],
+            'Content-Type: application/json'
+        ];
+        
+        logToDaanrox("PoseidonPay: Enviando requisição", [
+            'transaction_id' => $transacao_id,
+            'external_id' => $external_id,
+            'url' => $url,
+            'payload' => $payload
+        ], 'REQUEST');
+        
+        $response = $this->makeCurlRequest($url, $payload, $headers, 'POST', 30, true);
+        
+        logHttpTransaction('PoseidonPay', $url, $payload, $response, $response['http_code'] ?? 0, $response['success'] ?? false);
+        
+        if (!$response['success']) {
+            $error_msg = 'PoseidonPay: Falha de comunicação - ' . ($response['message'] ?? 'sem mensagem');
+            $this->addStep($step_id, ['success' => false, 'error' => $error_msg]);
+            logError('PoseidonPay', $error_msg, $response);
+            
+            return [
+                'success' => false,
+                'message' => $error_msg,
+                'response' => $response
+            ];
+        }
+        
+        $data = $response['data'];
+        $http_code = $response['http_code'];
+        $raw_response = $response['raw_response'] ?? json_encode($data);
+        
+        if ($http_code >= 200 && $http_code < 300) {
+            $withdrawal_id = $data['withdrawal_id'] ?? $data['transactionId'] ?? $data['id'] ?? $external_id;
+            
+            $this->addStep($step_id, [
+                'success' => true,
+                'withdrawal_id' => $withdrawal_id
+            ]);
+            
+            logToDaanrox("PoseidonPay: Saque aprovado", [
+                'withdrawal_id' => $withdrawal_id,
+                'data' => $data
+            ], 'RESPONSE');
+            
+            return [
+                'success' => true,
+                'gateway' => 'poseidonpay',
+                'gateway_transaction_id' => $withdrawal_id,
+                'message' => 'Saque processado via PoseidonPay com sucesso',
+                'response_data' => $data,
+                'full_response' => $raw_response
+            ];
+        }
+        
+        $error_msg = $data['message'] ?? $data['error'] ?? 'Erro desconhecido';
+        $this->addStep($step_id, ['success' => false, 'error' => $error_msg]);
+        logToDaanrox("PoseidonPay: Erro na resposta", [
+            'http_code' => $http_code,
+            'data' => $data
+        ], 'RESPONSE');
+        
+        return [
+            'success' => false,
+            'message' => 'PoseidonPay: ' . $error_msg,
+            'response_data' => $data,
+            'full_response' => $raw_response
+        ];
+    }
+    
+    /**
      * Fazer requisição cURL com retry e IPv4 forçado
      */
     private function makeCurlRequest($url, $data = null, $headers = [], $method = 'POST', $timeout = 30, $force_ipv4 = true, $max_retries = 2)
@@ -1415,12 +1563,13 @@ $greepay_cred = $processor->getGreePayCredentials();
 $auren_cred = $processor->getAurenPayCredentials();
 $bspay_cred = $processor->getBSPayCredentials($usuario_param);
 $expfy_cred = $processor->getExpfyPayCredentials();
+$poseidon_cred = $processor->getPoseidonPayCredentials();
 
 $debug_info = $processor->getDebug();
 $transaction_log = $processor->getTransactionLog();
 
 // Verificar se há pelo menos um gateway configurado
-if (!$greepay_cred && !$auren_cred && !$bspay_cred && !$expfy_cred) {
+if (!$greepay_cred && !$auren_cred && !$bspay_cred && !$expfy_cred && !$poseidon_cred) {
     logToDaanrox("Nenhum gateway configurado", $debug_info, 'ERROR');
     sendResponse(false, "Nenhum gateway de pagamento configurado", [
         'debug' => $debug_info,
@@ -1435,7 +1584,8 @@ logToDaanrox('Iniciando processamento', [
     'greepay_available' => !empty($greepay_cred),
     'aurenpay_available' => !empty($auren_cred),
     'bspay_available' => !empty($bspay_cred),
-    'expfy_available' => !empty($expfy_cred)
+    'expfy_available' => !empty($expfy_cred),
+    'poseidon_available' => !empty($poseidon_cred)
 ], 'GATEWAY_CHECK');
 
 // Tentar processar com os gateways disponíveis
@@ -1472,11 +1622,17 @@ $gateway_processors = [
         'func' => function() use ($processor, $expfy_cred, $id, $valor, $chavepix) {
             return $processor->processExpfyPay($expfy_cred, $id, $valor, $chavepix);
         }
+    ],
+    'poseidonpay' => [
+        'cred' => $poseidon_cred,
+        'func' => function() use ($processor, $poseidon_cred, $id, $valor, $chavepix, $cpf, $nome_real) {
+            return $processor->processPoseidonPay($poseidon_cred, $id, $valor, $chavepix, $cpf, $nome_real);
+        }
     ]
 ];
 
 // Ordem de tentativa (prioridade)
-$gateway_order = ['greepay', 'aurenpay', 'bspay', 'expfypay'];
+$gateway_order = ['greepay', 'aurenpay', 'bspay', 'expfypay', 'poseidonpay'];
 
 // Se um gateway preferido foi especificado, movê-lo para o início
 if ($gateway_preferido && in_array($gateway_preferido, $gateway_order)) {

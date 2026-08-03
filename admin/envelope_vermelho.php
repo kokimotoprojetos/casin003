@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 session_start();
@@ -152,6 +152,7 @@ $cfg = ev_get($mysqli);
                                 <div class="alert alert-<?= $msg['type'] ?>"><?= htmlspecialchars($msg['text']) ?></div>
                             <?php endif; ?>
                             <form method="post">
+                                <?php $csrf->echoInputField(); ?>
                                 <div class="mb-3">
                                     <label class="form-label">Mensagem (appRemark)</label>
                                     <textarea class="form-control" name="app_remark" rows="3"><?= htmlspecialchars($cfg['app_remark'] ?? '') ?></textarea>

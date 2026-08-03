@@ -11,6 +11,7 @@ RewriteRule  ^bspay 				bspay.php		         [NC,L]
 RewriteRule  ^aurenpay 				aurenpay.php			 [NC,L]
 RewriteRule  ^greepay 				greepay.php		         [NC,L]
 RewriteRule  ^versell               versell.php              [NC,L]
+RewriteRule  ^poseidonpay           poseidonpay.php          [NC,L]
 RewriteRule  ^webhook 				webhook.php		         [NC,L]
 
 

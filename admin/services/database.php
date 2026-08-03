@@ -11,11 +11,22 @@ if (!defined('SITE_URL')) {
 }
 
 if (!defined('DATABASE_LOADED')) {
-    $bd_local = getenv('DB_HOST') ?: 'mysql-32225e83-mandadinheiroproloky-4897.i.aivencloud.com';
-    $bd_usuario = getenv('DB_USER') ?: 'avnadmin';
-    $bd_senha = getenv('DB_PASS') ?: 'AVNS_Hx-pbf22fhzULYbOUkR';
-    $bd_banco = getenv('DB_NAME') ?: 'defaultdb';
-    $bd_porta = getenv('DB_PORT') ?: 18533;
+    $bd_local = getenv('DB_HOST');
+    $bd_usuario = getenv('DB_USER');
+    $bd_senha = getenv('DB_PASS');
+    $bd_banco = getenv('DB_NAME');
+    $bd_porta = getenv('DB_PORT');
+
+    if ($bd_local === false || $bd_usuario === false || $bd_senha === false || $bd_banco === false || $bd_porta === false) {
+        error_log('Database config missing env vars (DB_HOST/DB_USER/DB_PASS/DB_NAME/DB_PORT).');
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Configuração do banco de dados incompleta.'
+        ]);
+        exit;
+    }
 
     $bd = array(
         'local' => $bd_local,

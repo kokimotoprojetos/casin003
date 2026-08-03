@@ -5,9 +5,17 @@ function checa_login_adm()
 {
 	global $painel_adm_acessar, $mysqli, $painel_adm;
 	
+	// Garante que a sessão está ativa antes de qualquer verificação
+	if (session_status() === PHP_SESSION_NONE) {
+		session_start();
+	}
+
     // 1. Verificação básica de tokens de sessão
 	if (!isset($_SESSION['token_adm_encrypted']) || !isset($_SESSION["crsf_token_adm"]) || !isset($_SESSION["anti_crsf_token_adm"])) {
-        session_destroy();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION = array();
+            session_destroy();
+        }
 		header('Location: ' . $painel_adm_acessar . ''); 
 		exit();
 	}
@@ -26,8 +34,10 @@ function checa_login_adm()
 
         // Se não encontrar usuário ou status != 1
         if (!$result || mysqli_num_rows($result) === 0) {
-            session_unset();
-            session_destroy();
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_unset();
+                session_destroy();
+            }
             
             // Determina URL de bloqueio (absoluta ou relativa)
             $blocked_url = isset($painel_adm) ? $painel_adm . 'bloqueado.php' : 'bloqueado.php';
@@ -41,7 +51,9 @@ function checa_login_adm()
         
         // 4. Verificação final de status (Redundância de segurança)
         if ($_SESSION['data_adm']['status'] != '1') {
-             session_destroy();
+             if (session_status() === PHP_SESSION_ACTIVE) {
+                 session_destroy();
+             }
              $blocked_url = isset($painel_adm) ? $painel_adm . 'bloqueado.php' : 'bloqueado.php';
              header('Location: ' . $blocked_url);
              exit();

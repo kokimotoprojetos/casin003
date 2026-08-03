@@ -47,7 +47,8 @@ function count_games($search = '')
             WHERE game_name LIKE '%$search%' 
             AND distribution = 'BeePlay'";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 # Função para atualizar os dados do jogo
@@ -63,6 +64,7 @@ function update_game($data)
         type = ?, 
         game_type = ? 
         WHERE id = ?");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssisssii",
@@ -184,6 +186,7 @@ $games = get_games($limit, $offset, $search);
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
                                                         <form method="POST" action="">
+                                                            <?php $csrf->echoInputField(); ?>
                                                             <div class="modal-body">
                                                                 <div class="mb-3">
                                                                     <label for="game_name" class="form-label">Nome do Jogo</label>

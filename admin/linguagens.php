@@ -214,6 +214,7 @@ $languageData = [
 
                             <div class="card-body p-4">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row g-4">
                                         <div class="col-md-6 col-lg-4">
                                             <div class="mb-3">

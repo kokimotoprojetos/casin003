@@ -42,6 +42,7 @@ function update_config($data)
         facebookads = ?, 
         googleAnalytics = ?
         WHERE id = 1");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ss",
@@ -105,6 +106,7 @@ $config = get_afiliados_config();
 
                             <div class="card-body">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row">
                                         <!-- Nome -->
                                         <div class="col-md-6">

@@ -67,6 +67,7 @@ include_once "validar_2fa.php";
         for ($nivel = 1; $nivel <= 3; $nivel++) {
             $tipo = "comissao_cpa_nivel_{$nivel}";
             $stmt = $mysqli->prepare("SELECT COUNT(*) AS qtd, COALESCE(SUM(valor),0) AS soma FROM adicao_saldo WHERE id_user = ? AND tipo = ?");
+            if (!$stmt) return false;
             $stmt->bind_param("is", $user_id, $tipo);
             $stmt->execute();
             $res = $stmt->get_result()->fetch_assoc();
@@ -112,6 +113,7 @@ include_once "validar_2fa.php";
         $cpa3 = isset($_POST['cpaLvl3_ind']) ? floatval($_POST['cpaLvl3_ind']) : 0;
 
         $stmt = $mysqli->prepare("UPDATE usuarios SET cpaLvl1 = ?, cpaLvl2 = ?, cpaLvl3 = ? WHERE id = ?");
+        if (!$stmt) { return; }
         $stmt->bind_param("dddi", $cpa1, $cpa2, $cpa3, $id_user);
         $ok = $stmt->execute();
 
@@ -273,11 +275,13 @@ include_once "validar_2fa.php";
                                                 <p class="text-muted mb-0 fw-medium">Rollover Falta</p>
                                                 <div class="mt-1 d-flex gap-1">
                                                     <form method="POST" onsubmit="return promptRollover(this)">
+                                                        <?php $csrf->echoInputField(); ?>
                                                         <input type="hidden" name="action_rollover" value="adicionar">
                                                         <input type="hidden" name="valor_rollover" id="input_valor_roll">
                                                         <button type="submit" class="btn btn-sm btn-success">+</button>
                                                     </form>
                                                     <form method="POST" onsubmit="return confirm('Zerar rollover?')">
+                                                        <?php $csrf->echoInputField(); ?>
                                                         <input type="hidden" name="action_rollover" value="remover">
                                                         <button type="submit" class="btn btn-sm btn-danger">Zerar</button>
                                                     </form>
@@ -445,6 +449,7 @@ include_once "validar_2fa.php";
                         <div class="tab-content">
                             <div class="tab-pane p-3" id="editar" role="tabpanel">
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="real_name" class="form-label">Nome de usuario</label>
@@ -518,6 +523,7 @@ include_once "validar_2fa.php";
                                 </div>
                                 <div class="card-body">
                                     <form method="POST" action="">
+                                        <?php $csrf->echoInputField(); ?>
                                         <input type="hidden" name="update_cpa_individual" value="1">
 
                                         <div class="row">
@@ -682,6 +688,7 @@ include_once "validar_2fa.php";
                                         $tipo = "comissao_cpa_nivel_{$nivel}";
                                         $query = "SELECT SUM(valor) as total FROM adicao_saldo WHERE id_user = ? AND tipo = ?";
                                         $stmt = $mysqli->prepare($query);
+                                        if (!$stmt) return false;
                                         $stmt->bind_param("is", $user_id, $tipo);
                                         $stmt->execute();
                                         $result = $stmt->get_result();
@@ -915,9 +922,13 @@ include_once "validar_2fa.php";
                                             </thead>
                                             <tbody>
                                                 <?php
+                                                if (!isset($_REQUEST['slug'])) {
+                                                    echo '<tr><td colspan="6" class="text-center">Usuário não especificado.</td></tr>';
+                                                } else {
                                                 $id_user = decodeAll($_REQUEST['slug']);
+                                                $safe_id_user = mysqli_real_escape_string($mysqli, (string)$id_user);
 
-                                                $query_codigo_afiliado = "SELECT invite_code FROM usuarios WHERE id = '$id_user'";
+                                                $query_codigo_afiliado = "SELECT invite_code FROM usuarios WHERE id = '$safe_id_user'";
                                                 $result_codigo_afiliado = mysqli_query($mysqli, $query_codigo_afiliado);
 
                                                 if ($result_codigo_afiliado && mysqli_num_rows($result_codigo_afiliado) > 0) {
@@ -961,6 +972,7 @@ include_once "validar_2fa.php";
                                                 } else {
                                                     echo "<tr><td colspan='5' class='text-center'>Erro: Não foi possível encontrar o código de convite do usuário.</td></tr>";
                                                 }
+                                                }
                                                 ?>
                                             </tbody>
                                         </table>
@@ -985,7 +997,11 @@ include_once "validar_2fa.php";
                                             </thead>
                                             <tbody>
                                                 <?php
+                                                if (!isset($_REQUEST['slug'])) {
+                                                    echo '<tr><td colspan="6" class="text-center">Usuário não especificado.</td></tr>';
+                                                } else {
                                                 $id_user = decodeAll($_REQUEST['slug']);
+                                                $safe_id_user = mysqli_real_escape_string($mysqli, (string)$id_user);
 
                                                 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                     if (isset($_POST['edit_chave'])) {
@@ -993,19 +1009,25 @@ include_once "validar_2fa.php";
                                                         $nova_chave = $_POST['chave'];
                                                         $update_query = "UPDATE metodos_pagamentos SET chave = ? WHERE id = ?";
                                                         $stmt = $mysqli->prepare($update_query);
-                                                        $stmt->bind_param("si", $nova_chave, $metodo_id);
-                                                        $stmt->execute();
+                                                        if ($stmt) {
+                                                            $stmt->bind_param("si", $nova_chave, $metodo_id);
+                                                            $stmt->execute();
+                                                            $stmt->close();
+                                                        }
                                                     } elseif (isset($_POST['delete_metodo'])) {
                                                         $metodo_id = $_POST['id'];
 
                                                         $delete_query = "DELETE FROM metodos_pagamentos WHERE id = ?";
                                                         $stmt = $mysqli->prepare($delete_query);
-                                                        $stmt->bind_param("i", $metodo_id);
-                                                        $stmt->execute();
+                                                        if ($stmt) {
+                                                            $stmt->bind_param("i", $metodo_id);
+                                                            $stmt->execute();
+                                                            $stmt->close();
+                                                        }
                                                     }
                                                 }
 
-                                                $query_metodos_pagamento = "SELECT * FROM metodos_pagamentos WHERE user_id = '$id_user'";
+                                                $query_metodos_pagamento = "SELECT * FROM metodos_pagamentos WHERE user_id = '$safe_id_user'";
                                                 $result_metodos_pagamento = mysqli_query($mysqli, $query_metodos_pagamento);
 
                                                 if (!$result_metodos_pagamento) {
@@ -1026,6 +1048,7 @@ include_once "validar_2fa.php";
                                                                     <button class="btn btn-primary btn-sm" onclick="editarChave(<?= $metodo['id']; ?>)">Editar</button>
 
                                                                     <form method="POST" style="display: inline;">
+                                                                        <?php $csrf->echoInputField(); ?>
                                                                         <input type="hidden" name="id" value="<?= $metodo['id']; ?>" />
                                                                         <input type="hidden" name="delete_metodo" value="1" />
                                                                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este método de pagamento?')">Excluir</button>
@@ -1037,6 +1060,7 @@ include_once "validar_2fa.php";
                                                     } else {
                                                         echo "<tr><td colspan='6' class='text-center'>Nenhum método de pagamento encontrado!</td></tr>";
                                                     }
+                                                }
                                                 }
                                                 ?>
                                             </tbody>

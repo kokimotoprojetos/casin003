@@ -98,6 +98,7 @@ function update_config_images($logo = null, $favicon = null)
     $qry_string = rtrim($qry_string, ', ') . " WHERE id = 1";
 
     $qry = $mysqli->prepare($qry_string);
+    if (!$qry) return false;
     $qry->bind_param($types, ...$params);
 
     return $qry->execute();
@@ -160,6 +161,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $query = "SELECT logo, favicon FROM config WHERE id = 1";
 $result = mysqli_query($mysqli, $query);
 $config = mysqli_fetch_assoc($result);
+if (!$config) {
+    $config = [];
+}
 
 ?>
 
@@ -205,6 +209,7 @@ $config = mysqli_fetch_assoc($result);
                             </div>
                             <div class="card-body">
                                 <form method="POST" enctype="multipart/form-data">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="row mt-12">
                                         <div class="col-md-4"> <!-- Ajustado para 4 colunas para cada imagem -->
                                             <div class="card">
@@ -212,7 +217,7 @@ $config = mysqli_fetch_assoc($result);
                                                     <label for="logo" class="form-label">Logo</label>
                                                     <?php if (!empty($config['logo'])): ?>
                                                         <div class="mb-3">
-                                                            <img src="/uploads/<?= $dataconfig['logo']; ?>" class="img-fluid" alt="Logo" style="max-height: 150px;">
+                                                            <img src="/uploads/<?= htmlspecialchars($config['logo']); ?>" class="img-fluid" alt="Logo" style="max-height: 150px;">
                                                         </div>
                                                     <?php else: ?>
                                                         <p class="text-muted">Nenhuma imagem de logo enviada ainda.</p>
@@ -228,7 +233,7 @@ $config = mysqli_fetch_assoc($result);
                                                     <label for="favicon" class="form-label">Favicon</label>
                                                     <?php if (!empty($config['favicon'])): ?>
                                                         <div class="mb-3">
-                                                            <img src="/uploads/<?= $dataconfig['favicon']; ?>" class="img-fluid" alt="Favicon" style="max-height: 150px;">
+                                                            <img src="/uploads/<?= htmlspecialchars($config['favicon']); ?>" class="img-fluid" alt="Favicon" style="max-height: 150px;">
                                                         </div>
                                                     <?php else: ?>
                                                         <p class="text-muted">Nenhuma imagem de favicon enviada ainda.</p>

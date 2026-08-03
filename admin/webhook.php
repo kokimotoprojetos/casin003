@@ -27,11 +27,12 @@ function get_webhooks($limit, $offset)
     global $mysqli;
     $qry = "SELECT * FROM webhook LIMIT ? OFFSET ?";
     $stmt = $mysqli->prepare($qry);
+    if (!$stmt) return [];
     $stmt->bind_param("ii", $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
     $webhooks = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $result ? $result->fetch_assoc() : false) {
         $webhooks[] = $row;
     }
     return $webhooks;
@@ -42,7 +43,8 @@ function count_webhooks()
     global $mysqli;
     $qry = "SELECT COUNT(*) as total FROM webhook";
     $result = mysqli_query($mysqli, $qry);
-    return mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    return $row ? (int)$row['total'] : 0;
 }
 
 function get_webhook_stats()
@@ -57,12 +59,14 @@ function get_webhook_stats()
     // Total de webhooks
     $qry = "SELECT COUNT(*) as total FROM webhook";
     $result = mysqli_query($mysqli, $qry);
-    $stats['total'] = mysqli_fetch_assoc($result)['total'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    $stats['total'] = $row ? (int)$row['total'] : 0;
     
     // Webhooks ativos
     $qry = "SELECT COUNT(*) as ativos FROM webhook WHERE status = 1";
     $result = mysqli_query($mysqli, $qry);
-    $stats['ativos'] = mysqli_fetch_assoc($result)['ativos'];
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    $stats['ativos'] = $row ? (int)$row['ativos'] : 0;
     
     // Webhooks inativos
     $stats['inativos'] = $stats['total'] - $stats['ativos'];
@@ -78,6 +82,7 @@ function update_webhook($data)
         chat_id = ?, 
         status = ? 
         WHERE id = ?");
+    if (!$qry) return false;
 
     $qry->bind_param(
         "ssii",
@@ -93,6 +98,7 @@ function insert_webhook($data)
 {
     global $mysqli;
     $qry = $mysqli->prepare("INSERT INTO webhook (nome, bot_id, chat_id, status) VALUES (?, ?, ?, ?)");
+    if (!$qry) return false;
     $qry->bind_param("sssi", $data['nome'], $data['bot_id'], $data['chat_id'], $data['status']);
     return $qry->execute();
 }
@@ -323,6 +329,7 @@ $webhooks = get_webhooks($limit, $offset);
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="POST" action="">
+                                <?php $csrf->echoInputField(); ?>
                                 <input type="hidden" name="action" value="create">
                                 <div class="modal-body">
                                     <div class="mb-3">
@@ -372,6 +379,7 @@ $webhooks = get_webhooks($limit, $offset);
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <form method="POST" action="">
+                                    <?php $csrf->echoInputField(); ?>
                                     <div class="modal-body">
                                         <div class="mb-3">
                                             <label for="nome" class="form-label">Nome</label>
