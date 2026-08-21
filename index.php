@@ -21,13 +21,15 @@ $url_base = $proto . "://{$_SERVER['HTTP_HOST']}";
 $referencia = $_SERVER['HTTP_REFERER'] ?? $url_atual;
 $data_hoje = date("Y-m-d");
 $hora_hoje = date("H:i:s");
-// Resolver gargalo: só buscar geolocalização se for necessário inserir
-$id_user = 1;
-$stmt = $mysqli->prepare("SELECT 1 FROM visita_site WHERE data_cad = ? AND ip_visita = ?");
-$stmt->bind_param("ss", $data_hoje, $ip);
-$stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows === 0) {
+
+if ($mysqli && !$mysqli->connect_errno) {
+    $id_user = 1;
+    $stmt = $mysqli->prepare("SELECT 1 FROM visita_site WHERE data_cad = ? AND ip_visita = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $data_hoje, $ip);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows === 0) {
     $data_us = null;
     if (!empty($_SESSION['ip_geo']) &&
         isset($_SESSION['ip_geo']['ip'], $_SESSION['ip_geo']['data']) &&
@@ -63,13 +65,16 @@ if ($stmt->num_rows === 0) {
         $stmt->execute();
     }
 }
+} // end if ($mysqli && !$mysqli->connect_errno)
 $activeLayout = 'Layout2';
 $activeTheme = 'ChalcedonyGreen';
 
-$res = $mysqli->query("SELECT nome_cor, valor_cor FROM temas ORDER BY id DESC LIMIT 1");
-if ($res && $row = $res->fetch_assoc()) {
-    if (!empty($row['nome_cor'])) $activeLayout = $row['nome_cor'];
-    if (!empty($row['valor_cor'])) $activeTheme = $row['valor_cor'];
+if ($mysqli && !$mysqli->connect_errno) {
+    $res = $mysqli->query("SELECT nome_cor, valor_cor FROM temas ORDER BY id DESC LIMIT 1");
+    if ($res && $row = $res->fetch_assoc()) {
+        if (!empty($row['nome_cor'])) $activeLayout = $row['nome_cor'];
+        if (!empty($row['valor_cor'])) $activeTheme = $row['valor_cor'];
+    }
 }
 
 // Override via GET parameters for theme preview
@@ -92,9 +97,11 @@ $config = [
 ];
 
 try {
-    $result_conf = $mysqli->query("SELECT * FROM config LIMIT 1");
-    if ($result_conf && $row_conf = $result_conf->fetch_assoc()) {
-        $config = array_merge($config, $row_conf);
+    if ($mysqli && !$mysqli->connect_errno) {
+        $result_conf = $mysqli->query("SELECT * FROM config LIMIT 1");
+        if ($result_conf && $row_conf = $result_conf->fetch_assoc()) {
+            $config = array_merge($config, $row_conf);
+        }
     }
 
     $image_fields = ['logo', 'favicon', 'img_seo'];

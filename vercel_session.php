@@ -3,6 +3,8 @@ if (php_sapi_name() === 'cli') return;
 if (defined('VERCEL_SESSION_LOADED')) return;
 define('VERCEL_SESSION_LOADED', true);
 
+require_once __DIR__ . '/admin/services/env_loader.php';
+
 class VercelSessionHandler implements SessionHandlerInterface
 {
     private $mysqli;

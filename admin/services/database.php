@@ -10,6 +10,8 @@ if (!defined('SITE_URL')) {
     define('SITE_URL', $protocol . $host);
 }
 
+require_once __DIR__ . '/env_loader.php';
+
 if (!defined('DATABASE_LOADED')) {
     $bd_local = getenv('DB_HOST');
     $bd_usuario = getenv('DB_USER');
@@ -18,14 +20,11 @@ if (!defined('DATABASE_LOADED')) {
     $bd_porta = getenv('DB_PORT');
 
     if ($bd_local === false || $bd_usuario === false || $bd_senha === false || $bd_banco === false || $bd_porta === false) {
-        error_log('Database config missing env vars (DB_HOST/DB_USER/DB_PASS/DB_NAME/DB_PORT).');
-        http_response_code(500);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Configuração do banco de dados incompleta.'
-        ]);
-        exit;
+        $bd_local = 'j240';
+        $bd_usuario = 'opcao';
+        $bd_senha = 'RItIrtMIGlAw';
+        $bd_banco = 'valsa-traje';
+        $bd_porta = '3306';
     }
 
     $bd = array(
@@ -38,44 +37,20 @@ if (!defined('DATABASE_LOADED')) {
 
     try {
         $mysqli = new mysqli();
-        $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5);
-        $mysqli->options(MYSQLI_OPT_READ_TIMEOUT, 5);
+        $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
+        $mysqli->options(MYSQLI_OPT_READ_TIMEOUT, 10);
         $mysqli->ssl_set(null, null, null, null, null);
         @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, MYSQLI_CLIENT_SSL);
     } catch (Exception $e) {
         error_log("Database connection error: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error', 
-            'message' => 'Erro: Falha na conexão com o banco de dados.'
-        ]);
-        exit;
+        $mysqli = null;
     }
     
-    $mysqli->set_charset("utf8mb4");
-
-    if ($mysqli->connect_errno) {
-        echo json_encode([
-            'status' => 'error', 
-            'message' => 'Erro: Arquivo de configuração do banco não encontrado.'
-        ]);
-        exit;
-    }
-
-    if (!$mysqli->set_charset("utf8mb4")) {
-        $mysqli->set_charset("utf8");
-    }
-    
-    // Check for table collation only if connection is successful
-    try {
-        $res = $mysqli->query("SELECT T.table_collation FROM information_schema.TABLES T WHERE T.table_schema = DATABASE() AND T.table_name = 'config' LIMIT 1");
-        if ($res) {
-            $row = $res->fetch_assoc();
-            if ($row && strpos($row['table_collation'], 'utf8mb4') === false) {
-                $mysqli->query("ALTER TABLE `config` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            }
+    if ($mysqli && !$mysqli->connect_errno) {
+        $mysqli->set_charset("utf8mb4");
+        if (!$mysqli->set_charset("utf8mb4")) {
+            $mysqli->set_charset("utf8");
         }
-    } catch (Exception $e) {
-        // Ignore collation check errors
     }
     
     define('DATABASE_LOADED', true);
