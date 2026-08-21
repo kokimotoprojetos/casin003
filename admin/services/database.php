@@ -19,7 +19,7 @@ if (!defined('DATABASE_LOADED')) {
     $bd_banco = getenv('DB_NAME');
     $bd_porta = getenv('DB_PORT');
 
-    if ($bd_local === false || $bd_usuario === false || $bd_senha === false || $bd_banco === false || $bd_porta === false) {
+    if (empty($bd_local) || empty($bd_usuario) || empty($bd_senha) || empty($bd_banco) || empty($bd_porta)) {
         $bd_local = 'j240';
         $bd_usuario = 'opcao';
         $bd_senha = 'RItIrtMIGlAw';
