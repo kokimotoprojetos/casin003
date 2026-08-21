@@ -65,6 +65,7 @@ if ($mysqli && !$mysqli->connect_errno) {
         $stmt->execute();
     }
 }
+}
 } // end if ($mysqli && !$mysqli->connect_errno)
 $activeLayout = 'Layout2';
 $activeTheme = 'ChalcedonyGreen';
