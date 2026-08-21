@@ -125,7 +125,7 @@ register_shutdown_function(function () {
             header('Content-Type: application/json; charset=utf-8');
             http_response_code(500);
         }
-        echo json_encode(['error' => 'Internal Server Error', 'detail' => $e['message']]);
+        echo json_encode(['error' => 'Internal Server Error', 'detail' => $e['message'], 'file' => $e['file'], 'line' => $e['line']]);
         @ob_flush();
         flush();
     }
