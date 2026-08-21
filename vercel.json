@@ -4,17 +4,9 @@
     "api/*.php": {
       "runtime": "vercel-php@0.7.4",
       "excludeFiles": "{uploads/**,igamewin/**,assets/**,images/**,img/**,imgs/**,svg/**,icons/**,gif/**,theme/**,themes/**,sw/**,versionControl/**,node_modules/**}"
-    },
-    "gozei/api.php": {
-      "runtime": "vercel-php@0.7.4"
     }
   },
   "routes": [
-    {
-      "src": "^/gozei/api/(.*)",
-      "dest": "/gozei/api.php?route=$1",
-      "check": true
-    },
     {
       "src": "^/gozei$",
       "dest": "/gozei/index.php"
@@ -22,6 +14,10 @@
     {
       "src": "^/gozei/$",
       "dest": "/gozei/index.php"
+    },
+    {
+      "src": "^/gozei/api/(.*)",
+      "dest": "/api/index.php?gozei_route=$1"
     },
     {
       "src": "^/assets/(.*)",

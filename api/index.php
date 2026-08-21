@@ -260,4 +260,15 @@ if (preg_match('#\.(png|jpg|jpeg|gif|svg|webp|ico)$#', $uri)) {
     exit;
 }
 
+if (isset($_GET['gozei_route'])) {
+    $_SERVER['REQUEST_URI'] = '/gozei/api/' . $_GET['gozei_route'];
+    require $root . '/gozei/api.php';
+    exit;
+}
+
+if (strpos($uri, '/gozei/api/') === 0) {
+    require $root . '/gozei/api.php';
+    exit;
+}
+
 require $root . '/index.php';
