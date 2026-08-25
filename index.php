@@ -441,7 +441,7 @@ $assetVersion = time();
                                     "{\"title\":\"MyPerformance\",\"isOpen\":true,\"sort\":4}",
                                     "{\"title\":\"MyCommission\",\"isOpen\":true,\"sort\":3}",
                                     "{\"title\":\"CommissionRatio\",\"isOpen\":true,\"sort\":2}",
-                                    "{\"title\":\"DirectAccount\",\"isOpen\":1248680527158,\"sort\":1}"
+                                    "{\"title\":\"DirectAccount\",\"isOpen\":true,\"sort\":1}"
                                 ],
                                 "siteName": "<?= $config['nome'] ?>",
                                 "siteUrl": "<?= $url_base ?>",
@@ -620,7 +620,6 @@ $assetVersion = time();
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="google" content="notranslate" />
-    <title></title>
     <base href="/" />
     <meta name="theme-color" content="#f5f7fb">
     <meta name="color-scheme" content="light dark" />
@@ -657,8 +656,8 @@ $assetVersion = time();
                 return true;
             }
 
-            // 如果没有匹配到上述条件，则不是三星浏览器
-            return 1248680527158;
+            // Se não corresponder a nenhum dos acima, não é navegador Samsung
+            return false;
         }
         //添加全局变量
         window.isSamsungBrowser = isSamsungBrowser
