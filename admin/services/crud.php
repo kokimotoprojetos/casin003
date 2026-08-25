@@ -626,7 +626,7 @@ function pegarLinkJogoigamewin($provider, $game, $email)
         return array('gameURL' => null, 'error' => 'Configuração MaxAPIGames não encontrada no banco');
     }
 
-    $callbackUrl = rtrim(url_sistema(), '/') . '/callback/igamewin.php/gold_api';
+    $callbackUrl = rtrim(url_sistema(), '/') . '/playfiver/webhook';
 
     $dataRequest = array(
         "method"       => "game_launch",
