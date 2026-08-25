@@ -41,8 +41,11 @@ if (!defined('DATABASE_LOADED')) {
         $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5);
         $mysqli->options(MYSQLI_OPT_READ_TIMEOUT, 5);
         $mysqli->ssl_set(null, null, null, null, null);
-        @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, MYSQLI_CLIENT_SSL);
-    } catch (Exception $e) {
+        $sslFlags = defined('MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT')
+            ? MYSQLI_CLIENT_SSL | MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT
+            : MYSQLI_CLIENT_SSL;
+        @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, $sslFlags);
+    } catch (\Throwable $e) {
         error_log("Database connection error: " . $e->getMessage());
         echo json_encode([
             'status' => 'error', 
