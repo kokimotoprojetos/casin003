@@ -1,5 +1,6 @@
 <?php
 date_default_timezone_set("America/Sao_Paulo");
+mysqli_report(MYSQLI_REPORT_OFF);
 
 if (!defined('SITE_URL')) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')

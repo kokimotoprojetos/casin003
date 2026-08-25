@@ -1,5 +1,6 @@
 <?php
 date_default_timezone_set('America/Sao_Paulo');
+mysqli_report(MYSQLI_REPORT_OFF);
 include_once __DIR__ . '/../../config.php';
 //=======================================#
 $pasta_url = '/';
