@@ -40,7 +40,7 @@ if (!defined('DATABASE_LOADED')) {
         $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
         $mysqli->options(MYSQLI_OPT_READ_TIMEOUT, 10);
         $mysqli->ssl_set(null, null, null, null, null);
-        @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, MYSQLI_CLIENT_SSL);
+        @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, MYSQLI_CLIENT_SSL | MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT);
     } catch (Exception $e) {
         error_log("Database connection error: " . $e->getMessage());
         $mysqli = null;
