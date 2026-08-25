@@ -1,6 +1,16 @@
 <?php
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
+ob_start();
+register_shutdown_function(function () {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_WARNING])) {
+        @ob_end_clean();
+        header('Content-Type: text/plain');
+        http_response_code(500);
+        echo "FATAL: {$e['message']} in {$e['file']}:{$e['line']}";
+    }
+});
 @session_module_name('none');
 @session_start();
 header('Content-Type: text/html; charset=utf-8');
@@ -711,6 +721,10 @@ $assetVersion = time();
 <body>
     <div id="click-language" style="display:none;"></div>
     <div id="app"></div>
+    <?php
+    // Log se chegou ate aqui
+    error_log("index.php: reached body content");
+    ?>
     <script nomodule>
         !function () {
             var e = document
