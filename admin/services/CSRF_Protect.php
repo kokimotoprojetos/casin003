@@ -3,7 +3,7 @@
 class CSRF_Protect {
     public function __construct() {
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+            try { @session_start(); } catch (\Throwable $e) {}
         }
     }
     

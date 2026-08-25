@@ -2,7 +2,8 @@
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 if (session_status() === PHP_SESSION_NONE) {
-    try { @session_start(); } catch (\Throwable $e) {}
+    @ini_set('session.save_handler', 'none');
+    @session_start();
 }
 header('Content-Type: text/html; charset=utf-8');
 require_once "config.php";
