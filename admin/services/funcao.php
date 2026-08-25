@@ -133,10 +133,14 @@ function saques_por_dia() {
 function get_online_count() {
     global $mysqli;
     if (!$mysqli || $mysqli->connect_errno) return 0;
-    $r = $mysqli->query("SELECT COUNT(*) as total FROM usuarios WHERE last_activity >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
-    if (!$r) return 0;
-    $row = $r->fetch_assoc();
-    return $row['total'] ?? 0;
+    try {
+        $r = $mysqli->query("SELECT COUNT(*) as total FROM usuarios WHERE last_activity >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
+        if (!$r) return 0;
+        $row = $r->fetch_assoc();
+        return $row['total'] ?? 0;
+    } catch (\Throwable $e) {
+        return 0;
+    }
 }
 
 function visitas_count($tipo) {
