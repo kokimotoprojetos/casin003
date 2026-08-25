@@ -35,17 +35,29 @@ if (!defined('DATABASE_LOADED')) {
         'porta' => (int)$bd_porta
     );
 
+    $mysqli = null;
     try {
         $mysqli = new mysqli();
         $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
         $mysqli->options(MYSQLI_OPT_READ_TIMEOUT, 10);
-        $mysqli->ssl_set(null, null, null, null, null);
-        $sslFlags = MYSQLI_CLIENT_SSL;
+
+        $sslFlags = defined('MYSQLI_CLIENT_SSL') ? MYSQLI_CLIENT_SSL : 0;
         if (defined('MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT')) {
             $sslFlags |= MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT;
         }
-        @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, $sslFlags);
-    } catch (Exception $e) {
+
+        if ($sslFlags) {
+            $mysqli->ssl_set(null, null, null, null, null);
+            @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta'], null, $sslFlags);
+        } else {
+            @$mysqli->real_connect($bd['local'], $bd['usuario'], $bd['senha'], $bd['banco'], $bd['porta']);
+        }
+
+        if ($mysqli->connect_errno) {
+            error_log("DB connect error: " . $mysqli->connect_error);
+            $mysqli = null;
+        }
+    } catch (\Throwable $e) {
         error_log("Database connection error: " . $e->getMessage());
         $mysqli = null;
     }
