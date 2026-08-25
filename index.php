@@ -1,10 +1,7 @@
 <?php
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-if (session_status() === PHP_SESSION_NONE) {
-    @ini_set('session.save_handler', 'none');
-    @session_start();
-}
+session_module_name('none');
 header('Content-Type: text/html; charset=utf-8');
 require_once "config.php";
 require_once DASH . "/services/database.php";
