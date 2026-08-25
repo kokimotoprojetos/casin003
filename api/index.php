@@ -136,6 +136,10 @@ $uri = rtrim($uri, '/') ?: '/';
 
 $cleanRoutes = [
     '/health'                     => '/api/health.php',
+    '/api/ping'                   => '/api/ping.php',
+    '/api/ping.php'               => '/api/ping.php',
+    '/api/debug'                  => '/api/debug.php',
+    '/api/debug.php'              => '/api/debug.php',
 
     '/admin'                      => '/admin/index.php',
     '/admin/login'                => '/admin/auth-login.php',
