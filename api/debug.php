@@ -3,93 +3,56 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 header('Content-Type: text/plain');
 
-echo "=== PHP " . PHP_VERSION . " ===\n";
-echo "Time: " . date('c') . "\n\n";
+echo "Step 1: PHP OK " . PHP_VERSION . "\n";
 
-echo "=== Testing session ===\n";
-@ini_set('session.save_handler', 'none');
-@session_start();
-echo "Session status: " . session_status() . "\n\n";
+echo "Step 2: session_module_name... ";
+@session_module_name('none');
+echo "OK\n";
 
-echo "=== Testing config.php ===\n";
-try {
-    require_once __DIR__ . '/../config.php';
-    echo "OK\n\n";
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n\n";
+echo "Step 3: session_start... ";
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
 }
+echo "status=" . session_status() . "\n";
 
-echo "=== Testing database.php ===\n";
-try {
-    require_once __DIR__ . '/../admin/services/database.php';
-    echo "OK - connected: " . ($mysqli ? 'yes' : 'no') . "\n";
-    if ($mysqli && !$mysqli->connect_errno) {
-        echo "Server info: " . $mysqli->server_info . "\n";
-    }
-    if ($mysqli && $mysqli->connect_errno) {
-        echo "Connect error: " . $mysqli->connect_error . "\n";
-    }
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n";
-}
-echo "\n";
+echo "Step 4: config.php... ";
+chdir(__DIR__ . '/..');
+require_once __DIR__ . '/../config.php';
+echo "OK DASH=" . DASH . "\n";
 
-echo "=== Testing funcao.php ===\n";
-try {
-    require_once __DIR__ . '/../admin/services/funcao.php';
-    echo "OK\n\n";
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n\n";
-}
+echo "Step 5: database.php... ";
+require_once DASH . '/services/database.php';
+echo "OK connected=" . ($mysqli ? 'yes' : 'no') . "\n";
+if ($mysqli && $mysqli->connect_errno) echo "ERR: " . $mysqli->connect_error . "\n";
 
-echo "=== Testing crud.php ===\n";
-try {
-    require_once __DIR__ . '/../admin/services/crud.php';
-    echo "OK\n\n";
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n\n";
-}
+echo "Step 6: funcao.php... ";
+require_once DASH . '/services/funcao.php';
+echo "OK\n";
 
-echo "=== Testing CSRF_Protect.php ===\n";
-try {
-    require_once __DIR__ . '/../admin/services/CSRF_Protect.php';
-    $csrf = new CSRF_Protect();
-    echo "OK\n\n";
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n\n";
-}
+echo "Step 7: crud.php... ";
+require_once DASH . '/services/crud.php';
+echo "OK\n";
 
-echo "=== Testing pega-ip.php ===\n";
-try {
-    require_once __DIR__ . '/../admin/services/pega-ip.php';
-    echo "OK - IP: " . ($ip ?? 'not set') . "\n\n";
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n\n";
-}
+echo "Step 8: CSRF_Protect... ";
+require_once DASH . '/services/CSRF_Protect.php';
+$csrf = new CSRF_Protect();
+echo "OK\n";
 
-echo "=== Testing ip-crawler.php ===\n";
-try {
-    require_once __DIR__ . '/../admin/services/ip-crawler.php';
-    echo "OK\n\n";
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n\n";
-}
+echo "Step 9: pega-ip... ";
+require_once DASH . '/services/pega-ip.php';
+echo "OK ip=" . ($ip ?? 'null') . "\n";
 
-echo "=== DB Query test ===\n";
-try {
-    if ($mysqli && !$mysqli->connect_errno) {
-        $res = $mysqli->query("SELECT id, nome FROM config LIMIT 1");
-        if ($row = $res->fetch_assoc()) {
-            echo "Config: id=" . $row['id'] . ", nome=" . $row['nome'] . "\n";
-        }
-        $res2 = $mysqli->query("SHOW TABLES");
-        echo "Total tables: " . $res2->num_rows . "\n";
-    }
-} catch (Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
-}
+echo "Step 10: ip-crawler... ";
+require_once DASH . '/services/ip-crawler.php';
+echo "OK browser=" . ($browser ?? 'null') . "\n";
+
+echo "Step 11: DB query config... ";
+$res = $mysqli->query("SELECT id, nome FROM config LIMIT 1");
+$row = $res->fetch_assoc();
+echo "OK nome=" . ($row['nome'] ?? 'null') . "\n";
+
+echo "Step 12: DB query visita_site... ";
+$res = $mysqli->query("SELECT 1 FROM visita_site LIMIT 1");
+echo "OK\n";
+
+echo "\nALL STEPS PASSED";

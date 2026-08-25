@@ -1,7 +1,6 @@
 <?php
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-session_module_name('none');
 header('Content-Type: text/html; charset=utf-8');
 require_once "config.php";
 require_once DASH . "/services/database.php";
