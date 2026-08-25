@@ -1,7 +1,9 @@
 <?php
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    try { @session_start(); } catch (\Throwable $e) {}
+}
 header('Content-Type: text/html; charset=utf-8');
 require_once "config.php";
 require_once DASH . "/services/database.php";
