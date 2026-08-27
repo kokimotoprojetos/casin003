@@ -197,8 +197,14 @@ if (strpos($path, '/api/frontend/game-logo/') === 0 || $path === '/api/frontend/
         if (strpos($bannerUrl, 'maxapigames.com') !== false) {
             $ext = pathinfo(parse_url($bannerUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'png';
             $safeProv = str_replace(' ', '_', $rawProv);
-            $localUrl = "/uploads/game-logos/{$safeProv}_{$rawGameKey}.{$ext}";
-            header('Location: ' . $localUrl, true, 302);
+            $localPath = "/uploads/game-logos/{$safeProv}_{$rawGameKey}.{$ext}";
+            $rootDir = dirname(__DIR__, 2);
+            $localFile = $rootDir . $localPath;
+            if (file_exists($localFile) && filesize($localFile) > 0) {
+                header('Location: ' . $localPath, true, 302);
+            } else {
+                header('Location: ' . $bannerUrl, true, 302);
+            }
         } else {
             header('Location: ' . $bannerUrl, true, 302);
         }
@@ -1423,7 +1429,10 @@ if ($path === '/api/frontend/trpc/tenant.info') {
              "phoneCode" => "+55"
         ],
         "gamePartnerPic" => "",
-        "rewardSwitch" => true
+        "rewardSwitch" => true,
+        "gameLogoUrl" => $WG_BUCKET_SITE . "/api/frontend/game-logo",
+        "gameLogoStyle" => "style1",
+        "gameLogoLanguage" => "en"
     ];
     sendTrpcResponse($response);
 }
