@@ -1,6 +1,18 @@
 <?php
 require_once __DIR__ . '/session_handler.php';
 error_log("api/index.php invoked: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
+if (strpos($_SERVER['REQUEST_URI'] ?? '', 'debug-headers') !== false || isset($_GET['debug-headers'])) {
+    header('Content-Type: application/json');
+    $info = [
+        'SERVER' => $_SERVER,
+        'getallheaders_exists' => function_exists('getallheaders'),
+        'getallheaders' => function_exists('getallheaders') ? getallheaders() : null,
+        'HTTP_AUTHORIZATION' => $_SERVER['HTTP_AUTHORIZATION'] ?? null,
+        'REDIRECT_HTTP_AUTHORIZATION' => $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null,
+    ];
+    echo json_encode($info, JSON_PRETTY_PRINT);
+    exit;
+}
 if (strpos($_SERVER['REQUEST_URI'] ?? '', 'get-ip') !== false || isset($_GET['get-ip'])) {
     header('Content-Type: application/json');
     $ip = @file_get_contents('https://api.ipify.org');
