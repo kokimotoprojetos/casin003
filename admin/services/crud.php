@@ -643,7 +643,12 @@ function pegarLinkJogoigamewin($provider, $game, $email, $saldo = 0)
     );
 
     $json_data = json_encode($dataRequest);
-    $url = rtrim(trim($data_igamewin['url']), '/') . '/api/v2/game_launch';
+    $baseUrl = rtrim(trim($data_igamewin['url']), '/');
+    if (substr($baseUrl, -8) === '/api/v2') {
+        $url = $baseUrl . '/game_launch';
+    } else {
+        $url = $baseUrl . '/api/v2/game_launch';
+    }
 
     logIgamewin("URL Request: $url");
     logIgamewin("Payload enviado: $json_data");
