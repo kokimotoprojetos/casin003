@@ -45,8 +45,7 @@ if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $dominio
 }
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
-$WG_BUCKET_SITE = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? "https" : "http") .
-    "://" . $_SERVER['HTTP_HOST'];
+$WG_BUCKET_SITE = "https://" . $_SERVER['HTTP_HOST'];
 if (strpos($path, '/api/frontend/game-logo/') === 0 || $path === '/api/frontend/game-logo') {
     if (ob_get_length()) ob_clean();
     $parts = explode('/', trim($path, '/'));
