@@ -501,6 +501,9 @@ function getCurrentUser($mysqli) {
             $token = str_replace('Bearer ', '', $headers['Authorization']);
         }
     }
+    if (empty($token) && !empty($_SERVER['HTTP_AUTHORIZATION'])) {
+        $token = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
+    }
     if (empty($token) && isset($_COOKIE['token_user'])) {
         $token = $_COOKIE['token_user'];
     }
