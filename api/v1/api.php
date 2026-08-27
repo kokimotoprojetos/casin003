@@ -47,7 +47,7 @@ header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 $WG_BUCKET_SITE = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") .
     "://" . $_SERVER['HTTP_HOST'];
-if (strpos($path, '/api/frontend/game-logo/') === 0) {
+if (strpos($path, '/api/frontend/game-logo/') === 0 || $path === '/api/frontend/game-logo') {
     if (ob_get_length()) ob_clean();
     $parts = explode('/', trim($path, '/'));
     $file = end($parts);

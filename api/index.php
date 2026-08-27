@@ -191,6 +191,7 @@ $cleanRoutes = [
     '/ppclone'                    => '/callback/ppclone.php',
     '/drakon_api'                 => '/callback/drakon.php',
     '/playfiver/webhook'          => '/callback/playfiver.php',
+    '/api/webhook'                => '/callback/playfiver.php',
 ];
 
 $slugRoutes = [
