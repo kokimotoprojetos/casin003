@@ -18,6 +18,9 @@ function sendApiError($code, $message)
             ]
         ]
     ];
+    if (isTrpcBatch()) {
+        $errorPayload = [$errorPayload];
+    }
     echo json_encode($errorPayload);
     exit;
 }
@@ -214,6 +217,9 @@ if (strpos($path, '/api/frontend/game-logo/') === 0 || $path === '/api/frontend/
     echo json_encode(['error' => 'Game not found']);
     exit;
 }
+function isTrpcBatch() {
+    return isset($_GET['batch']);
+}
 function getTrpcInput() {
     if (isset($_GET['input'])) {
         return json_decode($_GET['input'], true);
@@ -222,6 +228,9 @@ function getTrpcInput() {
     if (!empty($rawInput)) {
         $decoded = json_decode($rawInput, true);
         if (json_last_error() === JSON_ERROR_NONE) {
+            if (isTrpcBatch() && isset($decoded['0'])) {
+                return $decoded['0'];
+            }
             return $decoded;
         }
     }
@@ -237,6 +246,9 @@ function sendTrpcResponse($data, $meta = null) {
     ];
     if ($meta) {
         $response["result"]["data"]["meta"] = $meta;
+    }
+    if (isTrpcBatch()) {
+        $response = [$response];
     }
     if (ob_get_length()) ob_clean();
     echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -705,7 +717,7 @@ if ($path === '/api/frontend/trpc/auth.registe') {
         $stmt->execute();
         if ($stmt->get_result()->num_rows > 0) {
             http_response_code(400);
-            echo json_encode([
+            $errPayload = [
                 "error" => [
                     "json" => [
                         "message" => "Usuário já existe",
@@ -717,7 +729,8 @@ if ($path === '/api/frontend/trpc/auth.registe') {
                         ]
                     ]
                 ]
-            ]);
+            ];
+            echo json_encode(isTrpcBatch() ? [$errPayload] : $errPayload);
             exit;
         }
     } catch (Throwable $e) {
