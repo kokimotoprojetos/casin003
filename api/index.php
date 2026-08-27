@@ -35,7 +35,7 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', 'test-launch') !== false || isset($_GE
             } elseif ($api === 'ppclone') {
                 $res2 = pegarLinkJogoPPClone($provider, $gameCode, $email, $saldo);
             } else {
-                $res2 = pegarLinkJogoigamewin($provider, $gameCode, $email);
+                $res2 = pegarLinkJogoigamewin($provider, $gameCode, $email, $saldo);
             }
             echo json_encode([
                 'game_id' => $gameId,

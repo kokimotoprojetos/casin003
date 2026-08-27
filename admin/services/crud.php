@@ -609,14 +609,14 @@ function logIgamewin($message) {
 /**
  * Função para lançar jogos via MaxAPIGames v2 (mantém nome legado iGameWin)
  */
-function pegarLinkJogoigamewin($provider, $game, $email)
+function pegarLinkJogoigamewin($provider, $game, $email, $saldo = 0)
 {
     global $data_igamewin;
 
     logIgamewin("--------------------------------------------------");
     logIgamewin("Iniciando solicitação de jogo. Provider: $provider, Game: $game, Email: $email");
 
-    if (!$data_igamewin || !isset($data_igamewin['agent_code'])) {
+    if (!$data_igamewin || empty(trim($data_igamewin['agent_token'] ?? '')) || empty(trim($data_igamewin['agent_secret'] ?? ''))) {
         logIgamewin("ERRO: Configuração MaxAPIGames não encontrada ou incompleta.");
         if ($data_igamewin) {
             logIgamewin("Dump config: " . json_encode($data_igamewin));
@@ -626,30 +626,35 @@ function pegarLinkJogoigamewin($provider, $game, $email)
         return array('gameURL' => null, 'error' => 'Configuração MaxAPIGames não encontrada no banco');
     }
 
-    $callbackUrl = rtrim(url_sistema(), '/') . '/playfiver/webhook';
+    $provUpper = strtoupper(trim($provider));
+    $providersOriginais = ['CQ9','JDB','FC','TD','SG','ACEWIN'];
+    $isOriginal = in_array($provUpper, $providersOriginais, true);
+    if ($provUpper === 'PGSOFT') { $isOriginal = false; }
 
     $dataRequest = array(
-        "method"       => "game_launch",
-        "agent_code"   => $data_igamewin['agent_code'],
-        "agent_token"  => $data_igamewin['agent_token'],
-        "user_code"    => $email,
-        "game_code"    => $game,
-        "callback_url" => $callbackUrl,
+        "agentToken"    => trim($data_igamewin['agent_token']),
+        "secretKey"     => trim($data_igamewin['agent_secret']),
+        "user_code"     => $email,
+        "game_code"     => (string)$game,
+        "provider"      => $provUpper,
+        "game_original" => $isOriginal,
+        "user_balance"  => floatval($saldo),
+        "lang"          => 'pt'
     );
 
     $json_data = json_encode($dataRequest);
-    $url = $data_igamewin['url'];
+    $url = rtrim(trim($data_igamewin['url']), '/') . '/api/v2/game_launch';
 
     logIgamewin("URL Request: $url");
     logIgamewin("Payload enviado: $json_data");
 
-    $response = enviarRequest($url, $json_data);
+    $response = enviarRequestPlayFiver($url, $json_data, $data_igamewin['proxy'] ?? null);
 
     logIgamewin("Resposta RAW recebida: $response");
 
     $data = json_decode($response, true);
 
-    if (isset($data['launch_url'])) {
+    if (isset($data['launch_url']) && !empty($data['launch_url'])) {
         $launch_url = $data['launch_url'];
         logIgamewin("SUCESSO: Launch URL obtida: " . $launch_url);
         $games = array('gameURL' => $launch_url, 'error' => null);

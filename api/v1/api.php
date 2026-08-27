@@ -8050,7 +8050,7 @@ if ($path === '/api/frontend/trpc/game.login') {
                 } elseif ($apiNormalized === 'playfiver') {
                      $gameLaunch = pegarLinkJogoApiPlayFiver($provider, $gameCode, $email, $saldo);
                 } else {
-                     $gameLaunch = pegarLinkJogoigamewin($provider, $gameCode, $email);
+                     $gameLaunch = pegarLinkJogoigamewin($provider, $gameCode, $email, $saldo);
                 }
                 if (isset($gameLaunch['gameURL']) && !empty($gameLaunch['gameURL'])) {
                     $loginUrl = $gameLaunch['gameURL'];
