@@ -3928,8 +3928,9 @@ if ($path === '/api/frontend/trpc/withdraw.getWithdrawAccount') {
                 ];
             }
         }
-    } else {
-    }
+                 } else {
+                      $gameLaunch = pegarLinkJogoApiPlayFiver($provider, $gameCode, $email, $saldo);
+                 }
     sendTrpcResponse([
         "queryData" => $queryData,
         "withdrawalAccountMax" => 5,
@@ -8049,8 +8050,9 @@ if ($path === '/api/frontend/trpc/game.login') {
                      $gameLaunch = pegarLinkJogoPPClone($provider, $gameCode, $email, $saldo);
                 } elseif ($apiNormalized === 'playfiver') {
                      $gameLaunch = pegarLinkJogoApiPlayFiver($provider, $gameCode, $email, $saldo);
+                } elseif ($apiNormalized === 'igamewin') {
+                     $gameLaunch = pegarLinkJogoApiPlayFiver($provider, $gameCode, $email, $saldo);
                 } else {
-                     $gameLaunch = pegarLinkJogoigamewin($provider, $gameCode, $email, $saldo);
                 }
                 if (isset($gameLaunch['gameURL']) && !empty($gameLaunch['gameURL'])) {
                     $loginUrl = $gameLaunch['gameURL'];
