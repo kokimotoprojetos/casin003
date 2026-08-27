@@ -675,11 +675,8 @@ if ($path === '/api/frontend/trpc/auth.tenants') {
 }
 if ($path === '/api/frontend/trpc/auth.registe') {
     $rotaEncontrada = true;
-    $input = $data['json'] ?? $data;
-    if (empty($input)) {
-        $input = getTrpcInput();
-        $input = $input['json'] ?? $input;
-    }
+    $input = getTrpcInput();
+    $input = $input['json'] ?? $input;
     $mobile = $input['phone'] ?? $input['mobile'] ?? $input['username'] ?? '';
     $password = $input['password'] ?? $input['pass'] ?? '';
     $inviteCode = $input['inviteCode'] ?? $input['code'] ?? $_GET['pid'] ?? '';
