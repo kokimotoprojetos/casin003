@@ -71,12 +71,14 @@ if (!defined('DATABASE_LOADED')) {
     
     // Check for table collation only if connection is successful
     try {
-        $res = $mysqli->query("SELECT T.table_collation FROM information_schema.TABLES T WHERE T.table_schema = DATABASE() AND T.table_name = 'config' LIMIT 1");
-        if ($res) {
+        $res = $mysqli->query("SELECT T.TABLE_COLLATION AS table_collation FROM information_schema.TABLES T WHERE T.table_schema = DATABASE() AND T.table_name = 'config' LIMIT 1");
+        if ($res instanceof mysqli_result) {
             $row = $res->fetch_assoc();
-            if ($row && strpos($row['table_collation'], 'utf8mb4') === false) {
+            $collation = is_array($row) ? ($row['table_collation'] ?? null) : null;
+            if (!empty($collation) && strpos($collation, 'utf8mb4') === false) {
                 $mysqli->query("ALTER TABLE `config` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             }
+            $res->free();
         }
     } catch (Exception $e) {
         // Ignore collation check errors
