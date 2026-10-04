@@ -16,7 +16,6 @@ include_once "../config.php";
 include_once('../' . DASH . '/services/database.php');
 include_once('../' . DASH . '/services/funcao.php');
 include_once('../' . DASH . '/services/crud.php');
-include_once('../' . DASH . '/services/webhook.php');
 
 global $mysqli;
 
@@ -256,6 +255,7 @@ function buscarValorIpnCashin($transacao_id)
 function attPaymentPix($transacao_id)
 {
     global $mysqli;
+    if (!validarTokenCallback($transacao_id)) { rejeitarCallback(); }
     
     // Verificar se já foi processado
     $qry_check = "SELECT status FROM transacoes WHERE transacao_id = ? AND tipo = 'deposito'";
@@ -564,6 +564,7 @@ function processarWebhookCashout($webhook_data)
 
 // ==================== LÓGICA DE AFILIAÇÃO (INTEGRADA) ====================
 
+if (!function_exists('logAfiliacao')) {
 function logAfiliacao($message) {
     // Caminho dinâmico para o arquivo de log na raiz (public/errorlog.log)
     $logFile = dirname(__DIR__) . '/errorlog.log';
@@ -572,6 +573,7 @@ function logAfiliacao($message) {
     
     // Tenta escrever no arquivo
     file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+}
 }
 
 /**

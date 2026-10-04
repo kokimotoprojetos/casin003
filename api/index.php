@@ -213,14 +213,22 @@ $directPrefixes = [
 $root = __DIR__ . '/..';
 
 if (isset($cleanRoutes[$uri])) {
-    require $root . $cleanRoutes[$uri];
+    $alvo = $root . $cleanRoutes[$uri];
+    // Os arquivos usam includes relativos a si mesmos (ex.: ../services/...),
+    // entao o cwd precisa ser o diretorio do alvo. Sem isso, depois do chdir()
+    // da linha 113 todo include relativo falhava (PHP_SEGURO/checa_login_adm
+    // undefined).
+    chdir(dirname($alvo));
+    require $alvo;
     exit;
 }
 
 foreach ($slugRoutes as $pattern => $dest) {
     if (preg_match($pattern, $uri, $m)) {
         $_GET['slug'] = $m[1];
-        require $root . $dest;
+        $alvo = $root . $dest;
+        chdir(dirname($alvo));
+        require $alvo;
         exit;
     }
 }
@@ -233,6 +241,7 @@ if (strpos($uri, '/admin/') === 0) {
             $target_file .= '.php';
         }
         if (file_exists($target_file)) {
+            chdir(dirname($target_file));
             require $target_file;
             exit;
         }
@@ -242,6 +251,7 @@ if (strpos($uri, '/admin/') === 0) {
 if (preg_match('#^/(callback|callbackpayment)/([a-zA-Z0-9_-]+)$#', $uri, $m)) {
     $file = '/' . $m[1] . '/' . $m[2] . '.php';
     if (file_exists($root . $file)) {
+        chdir(dirname($root . $file));
         require $root . $file;
         exit;
     }
@@ -249,7 +259,9 @@ if (preg_match('#^/(callback|callbackpayment)/([a-zA-Z0-9_-]+)$#', $uri, $m)) {
 
 foreach ($directPrefixes as $prefix => $dest) {
     if (strpos($uri . '/', $prefix . '/') === 0) {
-        require $root . $dest;
+        $alvo = $root . $dest;
+        chdir(dirname($alvo));
+        require $alvo;
         exit;
     }
 }

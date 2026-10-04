@@ -4,7 +4,6 @@ include_once "../config.php";
 include_once('../'.DASH.'/services/database.php');
 include_once('../'.DASH.'/services/funcao.php');
 include_once('../'.DASH.'/services/crud.php');
-include_once('../'.DASH.'/services/webhook.php');
 global $mysqli;
 
 // ⭐ Configurar handlers de erro ⭐
@@ -356,6 +355,7 @@ function busca_valor_ipn($transacao_id){
 
 function att_paymentpix($transacao_id){
     global $mysqli;
+    if (!validarTokenCallback($transacao_id)) { rejeitarCallback(); }
     
     bspay_log("att_paymentpix() chamado: Transacao=$transacao_id", 'UPDATE');
     
@@ -515,8 +515,10 @@ function adicionarSaldoUsuarioWebhook($id_user, $valor) {
 
 // ==================== FUNÇÕES DE LOG PARA AFILIAÇÃO ====================
 
+if (!function_exists('logAfiliacao')) {
 function logAfiliacao($message) {
     bspay_log("[AFILIACAO] $message", 'AFILIACAO');
+}
 }
 
 // ==================== FUNÇÕES DE AFILIAÇÃO ====================

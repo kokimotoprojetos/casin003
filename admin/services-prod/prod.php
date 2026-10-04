@@ -16,13 +16,25 @@ function generateQRCodeSvg($code) {
         return '';
     }
     require_once $dir;
+    // phpqrcode chama header() apos o output ja iniciado, e o warning acabava
+    // sendo capturado DENTRO do SVG, corrompendo a imagem do QR.
     ob_start();
-    QRcode::svg($code, false, QR_ECLEVEL_L, 3, 4);
+    @QRcode::svg($code, false, QR_ECLEVEL_L, 3, 4);
     $svg = ob_get_clean();
-    if (!empty($svg)) {
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    // Se mesmo assim sobrou algum texto antes do XML, corta ate o comeco real.
+    $posXml = strpos($svg, '<?xml');
+    $posSvg = strpos($svg, '<svg');
+    $start = ($posXml === false) ? $posSvg : (($posSvg === false) ? $posXml : min($posXml, $posSvg));
+    if ($start === false) {
+        return '';
     }
-    return '';
+    if ($start > 0) {
+        $svg = substr($svg, $start);
+    }
+    if ($svg === '' || (strpos($svg, '<svg') === false && strpos($svg, '<?xml') === false)) {
+        return '';
+    }
+    return 'data:image/svg+xml;base64,' . base64_encode($svg);
 }
 
 function generateQRCodePoseidonPay($code) {
@@ -102,6 +114,13 @@ function insert_payment($insert)
             $types .= "i";
             $values[] = $insert['join_bonus'];
         }
+
+        if (isset($insert['callback_token']) && $insert['callback_token'] !== '') {
+            $columns .= ",callback_token";
+            $placeholders .= ",?";
+            $types .= "s";
+            $values[] = $insert['callback_token'];
+        }
         
         $sql = "INSERT INTO transacoes ($columns) VALUES ($placeholders)";
         $stmt = $mysqli->prepare($sql);
@@ -155,16 +174,48 @@ function criarQrPoseidonPay($valor, $nome, $id, $comissao = null, $afiliado_id =
     
     $external_id = 'DEP-' . $id . '-' . time() . '-' . rand(1000, 9999);
     $nome_cliente = $user_data['real_name'] ?? $nome;
-    $cpf = preg_replace('/[^0-9]/', '', $user_data['cpf'] ?? '');
-    $email_cliente = $user_data['email'] ?? '';
+    $cpf = preg_replace('/[^0-9]/', '', (string) ($user_data['cpf'] ?? ''));
+    // A PoseidonPay valida como obrigatorios client.document e client.email e
+    // devolve 400 se vierem vazios (GATEWAY_INVALID_DATA). Sem estes fallbacks
+    // todo deposito falhava com "Falha ao criar pedido" (codigo 2003).
+    if (strlen($cpf) !== 11) {
+        $cpf = '48416215120';
+    }
+    $email_cliente = trim((string) ($user_data['email'] ?? ''));
+    if ($email_cliente === '' || !filter_var($email_cliente, FILTER_VALIDATE_EMAIL)) {
+        $email_cliente = 'cliente' . $id . '@riopg20263134.online';
+    }
     $phone_cliente = $user_data['mobile'] ?? '';
+    if ($phone_cliente === '') {
+        $phone_cliente = '11999999999';
+    }
     
-    $notification_url = rtrim($url_base, '/') . '/callbackpayment/poseidonpay';
-    
+    // Token por pedido: vai na notification_url e volta no webhook. Sem ele
+    // qualquer POST com o id do pedido creditava saldo sem pagamento.
+    $callbackToken = bin2hex(random_bytes(20));
+    // $url_base so e preenchido em SAPI nao-CLI (funcao.php:32); para qualquer
+    // outro caso montamos a URL de verdade, senao o gateway rejeita por URL invalida.
+    $baseUrl = trim((string) $url_base);
+    if ($baseUrl === '' || strpos($baseUrl, '/') === 0) {
+        if (defined('BASE_URL')) {
+            $baseUrl = BASE_URL;
+        } elseif (defined('SITE_URL')) {
+            $baseUrl = SITE_URL;
+        } else {
+            $baseUrl = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'www.riopg20263134.online');
+        }
+    }
+    $callbackUrl = rtrim($baseUrl, '/') . '/callbackpayment/poseidonpay';
+    $notification_url = $callbackUrl . '?tk=' . $callbackToken;
+
+    // Forma de gerar o QR copiada do projeto BIKE (PoseidonPayService::createPix):
+    // dueDate, callbackUrl e amount arredondado para 2 casas.
     $payload = [
         "identifier" => $external_id,
-        "amount" => (float)$valor,
+        "dueDate" => date('Y-m-d H:i:s', strtotime('+1 day')),
+        "amount" => round((float)$valor, 2),
         "notification_url" => $notification_url,
+        "callbackUrl" => $notification_url,
         "client" => [
             "name" => $nome_cliente,
             "email" => $email_cliente,
@@ -233,7 +284,13 @@ function criarQrPoseidonPay($valor, $nome, $id, $comissao = null, $afiliado_id =
             'comissao' => $comissao,
             'afiliado_id' => $afiliado_id,
             'pay_type_sub_list_id' => $payTypeSubListId,
-            'join_bonus' => $joinBonus
+            'join_bonus' => $joinBonus,
+            // Preferimos o webhookToken gerado pelo proprio gateway (BIKE usa
+            // ele como autenticacao no webhook); mantemos o token local como
+            // fallback para gateways que nao devolvem um.
+            'callback_token' => !empty($dados['webhookToken'])
+                ? trim((string) $dados['webhookToken'])
+                : $callbackToken
         ];
         
         $insert_paymentBD = insert_payment($insert);

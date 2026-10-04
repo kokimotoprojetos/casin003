@@ -377,3 +377,50 @@ if (!function_exists('safe_prepare')) {
         return $stmt;
     }
 }
+
+#=====================================================#
+# Token por pedido nos webhooks de deposito.
+#
+# A notification_url enviada ao gateway carrega ?tk=<token>, gravado em
+# transacoes.callback_token. Sem esta checagem, qualquer POST contendo apenas o
+# transacao_id (que o proprio cliente recebe em deposit.create) creditava o
+# saldo do usuario sem que o pagamento tivesse acontecido.
+if (!function_exists('validarTokenCallback')) {
+    function validarTokenCallback($transacaoId)
+    {
+        global $mysqli;
+        $tkReq = trim((string)($_GET['tk'] ?? ($_SERVER['HTTP_X_CALLBACK_TOKEN'] ?? '')));
+        if ($tkReq === '' || strlen($tkReq) > 64) {
+            return false;
+        }
+        if (!isset($mysqli) || !($mysqli instanceof mysqli)) {
+            return false;
+        }
+        $stmt = $mysqli->prepare("SELECT callback_token FROM transacoes WHERE transacao_id = ? LIMIT 1");
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bind_param("s", $transacaoId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = ($res && $res->num_rows > 0) ? $res->fetch_assoc() : null;
+        $stmt->close();
+        $stored = trim((string)($row['callback_token'] ?? ''));
+        if ($stored === '') {
+            return false;
+        }
+        return hash_equals($stored, $tkReq);
+    }
+}
+
+if (!function_exists('rejeitarCallback')) {
+    function rejeitarCallback()
+    {
+        if (!headers_sent()) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+        }
+        echo json_encode(['success' => false, 'message' => 'Token de callback inválido']);
+        exit;
+    }
+}

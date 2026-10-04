@@ -173,6 +173,7 @@ function buscarValorIpnCashinLytron($transacao_id) {
 
 function attPaymentPixLytron($transacao_id) {
     global $mysqli;
+    if (!validarTokenCallback($transacao_id)) { rejeitarCallback(); }
     $qry_check = "SELECT status FROM transacoes WHERE transacao_id = ? AND tipo = 'deposito'";
     $stmt_check = $mysqli->prepare($qry_check);
     if ($stmt_check) {

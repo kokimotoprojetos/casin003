@@ -336,6 +336,48 @@ foreach ([$id_transaction, $external_id] as $cand) {
     if (!empty($cand)) { $id_busca = $cand; break; }
 }
 
+// Exige o token por pedido. Aceitamos o token vindo em tres lugares, porque
+// dependendo do gateway ele vem em um deles:
+//   - ?tk=            (notification_url que enviamos na criacao)
+//   - header          (X-Callback-Token)
+//   - corpo           (webhookToken que a PoseidonPay devolve — jeito do BIKE)
+// Sem isto, um POST qualquer contendo apenas o transacao_id do pedido
+// creditava o saldo do usuario sem que o pagamento tivesse ocorrido.
+$candidatos = array_filter([
+    trim((string)($_GET['tk'] ?? '')),
+    trim((string)($_SERVER['HTTP_X_CALLBACK_TOKEN'] ?? '')),
+    trim((string)($data['token'] ?? '')),
+    trim((string)($data['webhookToken'] ?? '')),
+]);
+$tkOk = false;
+$tkReq = '';
+foreach ($candidatos as $c) {
+    if ($c === '' || strlen($c) > 64) {
+        continue;
+    }
+    $stmtTk = $mysqli->prepare("SELECT callback_token FROM transacoes WHERE transacao_id = ? LIMIT 1");
+    if (!$stmtTk) {
+        continue;
+    }
+    $stmtTk->bind_param("s", $id_busca);
+    $stmtTk->execute();
+    $resTk = $stmtTk->get_result();
+    $rowTk = ($resTk && $resTk->num_rows > 0) ? $resTk->fetch_assoc() : null;
+    $stmtTk->close();
+    $tkStored = trim((string)($rowTk['callback_token'] ?? ''));
+    if ($tkStored !== '' && hash_equals($tkStored, $c)) {
+        $tkOk = true;
+        $tkReq = $c;
+        break;
+    }
+}
+if (!$tkOk) {
+    log_poseidonpay("Webhook REJEITADO: token ausente ou invalido", ['id' => $id_busca, 'candidatos' => count($candidatos)]);
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Token de callback inválido']);
+    exit;
+}
+
 if (!empty($id_busca) && in_array($status, $valid_statuses)) {
     $att = attPaymentPix($id_busca);
 

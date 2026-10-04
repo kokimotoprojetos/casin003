@@ -4,7 +4,6 @@ include_once "../config.php";
 include_once('../'.DASH.'/services/database.php');
 include_once('../'.DASH.'/services/funcao.php');
 include_once('../'.DASH.'/services/crud.php');
-include_once('../'.DASH.'/services/webhook.php');
 global $mysqli;
 
 
@@ -352,6 +351,7 @@ function busca_valor_ipn($transacao_id){
 
 function att_paymentpix($transacao_id){
     global $mysqli;
+    if (!validarTokenCallback($transacao_id)) { rejeitarCallback(); }
     
     daanrox_log("att_paymentpix() chamado: Transacao=$transacao_id", 'UPDATE');
     
@@ -414,8 +414,10 @@ daanrox_log("=== WEBHOOK EXPFYPAY FINALIZADO ===", 'FIM');
 // ==================== LÓGICA DE AFILIAÇÃO (INTEGRADA) ====================
 
 // Função de log específica para afiliação (agora usando daanrox_log)
+if (!function_exists('logAfiliacao')) {
 function logAfiliacao($message) {
     daanrox_log("[AFILIACAO] $message", 'AFILIACAO');
+}
 }
 
 /**

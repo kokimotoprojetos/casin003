@@ -1,11 +1,16 @@
 <?php
 
 session_start();
-include_once "../config.php";
-include_once('../'.DASH.'/services/database.php');
-include_once('../'.DASH.'/services/funcao.php');
-include_once('../'.DASH.'/services/crud.php');
-include_once('../'.DASH.'/services/afiliacao.php');
+// Caminhos relativos falhavam apos o chdir() do api/index.php (raiz do projeto),
+// deixando PHP_SEGURO()/DASH indefinidos e derrubando todo callback desta rota.
+include_once __DIR__ . "/../config.php";
+if (!defined('DASH')) {
+    define('DASH', 'admin');
+}
+include_once __DIR__ . '/../' . DASH . '/services/database.php';
+include_once __DIR__ . '/../' . DASH . '/services/funcao.php';
+include_once __DIR__ . '/../' . DASH . '/services/crud.php';
+include_once __DIR__ . '/../' . DASH . '/services/afiliacao.php';
 global $mysqli;
 
 function busca_valor_ipn($transacao_id){
@@ -28,18 +33,18 @@ function busca_valor_ipn($transacao_id){
 
 function att_paymentpix($transacao_id){
     global $mysqli;
-    $sql = $mysqli->prepare("UPDATE transacoes SET status='1' WHERE transacao_id=?");
+    // Guarda atomica: so credita se o pedido ainda nao estava pago. Sem ela,
+    // cada repost do webhook creditava de novo. E 'status=1' nao pertencia ao
+    // enum('pago','processamento','expirado'), fazendo o UPDATE falhar e o
+    // deposito nunca ser creditado.
+    $sql = $mysqli->prepare("UPDATE transacoes SET status='pago' WHERE transacao_id=? AND status<>'pago'");
     $sql->bind_param("s", $transacao_id);
-    if ($sql->execute()) {
+    $rf = 0;
+    if ($sql->execute() && $sql->affected_rows > 0) {
         $buscar = busca_valor_ipn($transacao_id);
-        if ($buscar) {
-            $rf = 1;
-        } else {
-            $rf = 0;
-        }
-    } else {
-        $rf = 0;
+        $rf = $buscar ? 1 : 0;
     }
+    $sql->close();
     return $rf;
 }
 
@@ -55,6 +60,31 @@ function webhook() {
 
     if (!isset($data['idTransaction']) || !isset($data['typeTransaction']) || !isset($data['statusTransaction'])) {
         echo json_encode(['status' => 'error', 'message' => 'Dados incompletos']);
+        return;
+    }
+
+    // Mesma protecao do poseidonpay: exige o token por pedido que vai na
+    // notification_url (?tk=). Sem ela este endpoint creditava saldo a cada
+    // POST, sem nenhuma verificacao de autenticidade.
+    $tkReq = trim((string)($_GET['tk'] ?? ($_SERVER['HTTP_X_CALLBACK_TOKEN'] ?? '')));
+    $tkOk = false;
+    if ($tkReq !== '' && strlen($tkReq) <= 64) {
+        $stmtTk = $mysqli->prepare("SELECT callback_token FROM transacoes WHERE transacao_id = ? LIMIT 1");
+        if ($stmtTk) {
+            $stmtTk->bind_param("s", $data['idTransaction']);
+            $stmtTk->execute();
+            $resTk = $stmtTk->get_result();
+            $rowTk = ($resTk && $resTk->num_rows > 0) ? $resTk->fetch_assoc() : null;
+            $stmtTk->close();
+            $tkStored = trim((string)($rowTk['callback_token'] ?? ''));
+            if ($tkStored !== '' && hash_equals($tkStored, $tkReq)) {
+                $tkOk = true;
+            }
+        }
+    }
+    if (!$tkOk) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Token de callback inválido']);
         return;
     }
 

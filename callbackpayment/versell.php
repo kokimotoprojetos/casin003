@@ -4,7 +4,6 @@ include_once "../config.php";
 include_once('../'.DASH.'/services/database.php');
 include_once('../'.DASH.'/services/funcao.php');
 include_once('../'.DASH.'/services/crud.php');
-include_once('../'.DASH.'/services/webhook.php');
 global $mysqli;
 
 $raw = file_get_contents('php://input');
@@ -145,6 +144,7 @@ function busca_valor_ipn($transacao_id){
 
 function att_paymentpix($transacao_id){
     global $mysqli;
+    if (!validarTokenCallback($transacao_id)) { rejeitarCallback(); }
     $stmt_check = $mysqli->prepare("SELECT status FROM transacoes WHERE transacao_id = ?");
     if ($stmt_check) {
         $stmt_check->bind_param("s", $transacao_id);
@@ -191,11 +191,13 @@ echo json_encode(['success' => true, 'message' => 'Webhook recebido']);
 
 // ==================== LÓGICA DE AFILIAÇÃO (INTEGRADA) ====================
 
+if (!function_exists('logAfiliacao')) {
 function logAfiliacao($message) {
     $logFile = dirname(__DIR__) . '/errorlog.log';
     $timestamp = date('d-M-Y H:i:s T');
     $formattedMessage = "[$timestamp] [AFILIACAO INTEGRADA] $message" . PHP_EOL;
     file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+}
 }
 
 function getAfiliadosConfig() {

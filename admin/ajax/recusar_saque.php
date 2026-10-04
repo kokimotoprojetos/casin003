@@ -17,20 +17,9 @@
   checa_login_adm();
   #======================================#
 
-if (isset($_POST['att-pay']) && isset($_POST['_csrf']) && isset($_POST['id_pay']) && isset($_POST['email_reprovado']) && isset($_POST['valor_reprovado'])) {
+if (isset($_POST['att-pay']) && isset($_POST['_csrf']) && isset($_POST['id_pay'])) {
     #----------------------------------------------#
     $id_pay =  PHP_SEGURO($_POST['id_pay']);
-    $email_pay =  PHP_SEGURO($_POST['email_reprovado']);
-    $valor_pay = $_POST['valor_reprovado'];
-
-    // Remover os pontos (separador de milhar)
-    $valor_pay = str_replace('.', '', $valor_pay);
-    
-    // Substituir a vírgula por ponto (para decimal)
-    $valor_pay = str_replace(',', '.', $valor_pay);
-    
-    // Agora converte para float
-    $valor_pay = floatval($valor_pay);
     $CSRF =   PHP_SEGURO($_POST['_csrf']);
     $data = date('Y-m-d H:i:s');
     #----------------------------------------------#
@@ -41,20 +30,50 @@ if (isset($_POST['att-pay']) && isset($_POST['_csrf']) && isset($_POST['id_pay']
         exit;
     }
 
-    // Executa a query de atualização
-    $sql = $mysqli->prepare("UPDATE solicitacao_saques SET data_att=?,status=2 WHERE id=?");
+    // Valor e dono do saque vem SEMPRE do banco. O POST so era display e podia
+    // inflar o reembolso (ou estourar outro usuario) a partir do cliente.
+    $stmtSel = $mysqli->prepare("SELECT id_user, valor FROM solicitacao_saques WHERE id = ?");
+    if (!$stmtSel) {
+        echo json_encode(['status' => 'error', 'message' => 'Não foi possível recusar o saque.']);
+        exit;
+    }
+    $stmtSel->bind_param("i", $id_pay);
+    $stmtSel->execute();
+    $resSel = $stmtSel->get_result();
+    $saqueRow = $resSel ? $resSel->fetch_assoc() : null;
+    $stmtSel->close();
+    if (!$saqueRow) {
+        echo json_encode(['status' => 'error', 'message' => 'Saque não encontrado.']);
+        exit;
+    }
+
+    // Guarda de estado: so recusa um saque que ainda esta pendente (status 0).
+    // Sem isso, recusar duas vezes creditava o reembols duas vezes.
+    $sql = $mysqli->prepare("UPDATE solicitacao_saques SET data_att=?, status=2 WHERE id=? AND status=0");
     $sql->bind_param("si", $data, $id_pay);
 
-    if ($sql->execute()) {
-        // Se a query foi bem-sucedida, processa o saldo e loga a operação
-        enviarSaldo($email_pay, $valor_pay);
+    if ($sql->execute() && $sql->affected_rows > 0) {
+        $stmtUser = $mysqli->prepare("SELECT mobile FROM usuarios WHERE id = ?");
+        $mobileUser = '';
+        if ($stmtUser) {
+            $stmtUser->bind_param("i", $saqueRow['id_user']);
+            $stmtUser->execute();
+            $resUser = $stmtUser->get_result();
+            if ($rowUser = $resUser->fetch_assoc()) {
+                $mobileUser = $rowUser['mobile'];
+            }
+            $stmtUser->close();
+        }
+        if ($mobileUser !== '') {
+            enviarSaldo($mobileUser, $saqueRow['valor']);
+        } else {
+            registrarLog($mysqli, $_SESSION['data_adm']['email'], 'SAQUE RECUSADO SEM REEMBOLSO (usuario nao encontrado) id=' . $id_pay);
+        }
         registrarLog($mysqli, $_SESSION['data_adm']['email'], 'Recusou o saque ' . $id_pay);
 
-        // Responde com sucesso em JSON
         echo json_encode(['status' => 'success', 'message' => 'Saque recusado com sucesso!']);
     } else {
-        // Responde com erro em JSON
-        echo json_encode(['status' => 'error', 'message' => 'Não foi possível recusar o saque.']);
+        echo json_encode(['status' => 'error', 'message' => 'Saque já processado ou não encontrado.']);
     }
 
     $mysqli->close();

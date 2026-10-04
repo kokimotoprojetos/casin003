@@ -4,7 +4,6 @@ include_once "../config.php";
 include_once('../'.DASH.'/services/database.php');
 include_once('../'.DASH.'/services/funcao.php');
 include_once('../'.DASH.'/services/crud.php');
-include_once('../'.DASH.'/services/webhook.php');
 global $mysqli;
 
 function inpagamentosLog($msg) {
@@ -28,6 +27,7 @@ if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
 if (!isset($data['type']) || $data['type'] !== 'transaction' || !isset($data['data'])) {
     // ==================== LÓGICA DE AFILIAÇÃO (INTEGRADA) ====================
 
+if (!function_exists('logAfiliacao')) {
 function logAfiliacao($message) {
     // Caminho dinâmico para o arquivo de log na raiz (public/errorlog.log)
     $logFile = dirname(__DIR__) . '/errorlog.log';
@@ -36,6 +36,7 @@ function logAfiliacao($message) {
     
     // Tenta escrever no arquivo
     file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+}
 }
 
 /**
@@ -474,6 +475,7 @@ function busca_valor_ipn($transacao_id){
 
 function att_paymentpix($transacao_id){
     global $mysqli;
+    if (!validarTokenCallback($transacao_id)) { rejeitarCallback(); }
     $stmt_check = $mysqli->prepare("SELECT status FROM transacoes WHERE transacao_id = ?");
     if ($stmt_check) {
         $stmt_check->bind_param("s", $transacao_id);

@@ -4013,6 +4013,19 @@ if ($path === '/api/frontend/trpc/withdraw.createOrder') {
     $pixKey = $dataInput['withdrawalAccount'] ?? '';
     $inputRealName = $dataInput['realName'] ?? $dataInput['name'] ?? '';
     $typeSubId = $dataInput['tenantWithdrawTypeSubId'] ?? 0;
+    if (!is_numeric($amountCents) || !is_finite($amount) || $amount <= 0) {
+         header('Content-Type: application/json');
+         echo json_encode([
+            "error" => [
+                "json" => [
+                    "message" => "Valor de saque inválido",
+                    "code" => -32600,
+                    "data" => ["code" => "BAD_REQUEST", "httpStatus" => 400, "path" => "withdraw.createOrder"]
+                ]
+            ]
+         ]);
+         exit;
+    }
     if ($password !== $user['senhaparasacar']) {
          header('Content-Type: application/json');
          echo json_encode([
@@ -4042,31 +4055,22 @@ if ($path === '/api/frontend/trpc/withdraw.createOrder') {
     
     // --- INÍCIO: TRAVAS DE SAQUE (Regras Promocionais e de Liberação) ---
     // Regra 1: Saldo total (carteira + bonus) >= R$ 50,00 para sacar
-    $stmtFin = $mysqli->prepare("SELECT saldo, bonus FROM financeiro WHERE usuario = ? LIMIT 1");
-    if ($stmtFin) {
-        $stmtFin->bind_param("i", $user['id']);
-        $stmtFin->execute();
-        $resFin = $stmtFin->get_result();
-        $finData = $resFin->fetch_assoc();
-        $stmtFin->close();
-        
-        $saldoRealConta = floatval($finData['saldo'] ?? 0);
-        $saldoBonusConta = floatval($finData['bonus'] ?? 0);
-        $saldoTotalUsuario = $saldoRealConta + $saldoBonusConta;
-        
-        if ($saldoTotalUsuario < 50.00) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                "error" => [
-                    "json" => [
-                        "message" => "É necessário ter ganho no mínimo R$ 50,00 em apostas (alcançar saldo mínimo) para poder realizar saques.",
-                        "code" => -32600,
-                        "data" => ["code" => "BAD_REQUEST", "httpStatus" => 400, "path" => "withdraw.createOrder"]
-                    ]
+    // A tabela `financeiro` nunca e alimentada (adicionarsaldo() nao e chamado em
+    // lugar nenhum do projeto), entao o saldo la era sempre 0 e travava TODO saque.
+    // O minimo de R$ 50 passa a ser valido sobre o saldo real da conta.
+    $saldoTotalUsuario = floatval($user['saldo']);
+    if ($saldoTotalUsuario < 50.00) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            "error" => [
+                "json" => [
+                    "message" => "É necessário ter no mínimo R$ 50,00 em saldo para poder realizar saques.",
+                    "code" => -32600,
+                    "data" => ["code" => "BAD_REQUEST", "httpStatus" => 400, "path" => "withdraw.createOrder"]
                 ]
-            ]);
-            exit;
-        }
+            ]
+        ]);
+        exit;
     }
     
     // Regra 2: Depósito mínimo acumulado de R$ 30,00
@@ -4170,6 +4174,9 @@ if ($path === '/api/frontend/trpc/withdraw.createOrder') {
         $stmtCheckDup->close();
     }
     $transacaoId = ((string) round(microtime(true) * 1000)) . str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+    // Insere o pedido e debita o saldo na MESMA transacao: se o debito nao
+    // acontecer (saldo esgotado por concorrencia), o pedido tambem e desfeito.
+    $mysqli->begin_transaction();
     $stmt = $mysqli->prepare("INSERT INTO solicitacao_saques (id_user, valor, tipo, pix, telefone, data_registro, transacao_id, status, tipo_saque) VALUES (?, ?, 'PIX', ?, ?, NOW(), ?, 0, 0)");
     $stmt->bind_param("idsss", $user['id'], $amount, $pixKey, $user['celular'], $transacaoId);
     if ($stmt->execute()) {
@@ -4224,10 +4231,25 @@ if ($path === '/api/frontend/trpc/withdraw.createOrder') {
                 error_log("Failed to prepare PIX check statement: " . $mysqli->error);
             }
         }
-        $stmtUpdate = $mysqli->prepare("UPDATE usuarios SET saldo = saldo - ? WHERE id = ?");
-        $stmtUpdate->bind_param("di", $amount, $user['id']);
-        $stmtUpdate->execute();
+        $stmtUpdate = $mysqli->prepare("UPDATE usuarios SET saldo = saldo - ? WHERE id = ? AND saldo >= ?");
+        $stmtUpdate->bind_param("did", $amount, $user['id'], $amount);
+        $debitoOk = $stmtUpdate->execute() && $stmtUpdate->affected_rows > 0;
         $stmtUpdate->close();
+        if (!$debitoOk) {
+            $mysqli->rollback();
+            header('Content-Type: application/json');
+            echo json_encode([
+                "error" => [
+                    "json" => [
+                        "message" => "Saldo insuficiente",
+                        "code" => -32600,
+                        "data" => ["code" => "BAD_REQUEST", "httpStatus" => 400, "path" => "withdraw.createOrder"]
+                    ]
+                ]
+            ]);
+            exit;
+        }
+        $mysqli->commit();
         echo json_encode([
             "result" => [
                 "data" => [
@@ -4239,6 +4261,7 @@ if ($path === '/api/frontend/trpc/withdraw.createOrder') {
             ]
         ]);
     } else {
+        $mysqli->rollback();
          header('Content-Type: application/json');
          echo json_encode([
             "error" => [
@@ -6721,8 +6744,20 @@ if ($path === '/api/frontend/trpc/deposit.create' || $path === '/api/frontend/tr
         $amount = floatval($_POST['amount']);
     }
     $amount = $amount / 100;
-    if ($amount <= 0) {
+    if (!is_finite($amount) || $amount <= 0) {
         sendTrpcResponse(["status" => false, "msg" => "Valor inválido."]);
+        exit;
+    }
+    // Antes so havia a checagem "> 0": um pedido de R$ 9.999.999,99 era aceito,
+    // e o callback credita exatamente `transacoes.valor`.
+    $minDep = (float)getConf('mindep', 10);
+    if ($minDep <= 0) { $minDep = 10; }
+    $maxDep = 100000.00;
+    if ($amount < $minDep || $amount > $maxDep) {
+        sendTrpcResponse([
+            "status" => false,
+            "msg" => "Valor deve estar entre R$ " . number_format($minDep, 2, ',', '.') . " e R$ " . number_format($maxDep, 2, ',', '.') . "."
+        ]);
         exit;
     }
     $nome = $user['real_name'] ?? 'Cliente';
