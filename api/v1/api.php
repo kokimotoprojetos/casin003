@@ -24,6 +24,21 @@ function sendApiError($code, $message)
     echo json_encode($errorPayload);
     exit;
 }
+
+// Resposta 401 no formato que o front entende (assets/index-T2Rmfk75.js):
+//   if (status === 401) JSON.parse(d.message).code === "UNAUTHORIZED"
+//       -> removeToken(), removeUser(), mostra popup de sessao expirada
+// Se message for um texto qualquer ("Sessao invalida"), o JSON.parse lanca
+// excecao, o catch so escreve no console e o usuario nao vê NADA acontecer —
+// foi exatamente o que acontecia ao clicar num jogo com a sessao antiga.
+function sendUnauthorized($humanMessage = 'Sessão inválida')
+{
+    sendApiError(401, json_encode([
+        'code' => 'UNAUTHORIZED',
+        'message' => $humanMessage,
+        'httpStatus' => 401
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+}
 $rotaEncontrada = false;
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestURI = $_SERVER['REQUEST_URI'];
@@ -2196,7 +2211,7 @@ if ($path === '/api/frontend/trpc/vip.receive') {
         sendApiError(400, "Parâmetros inválidos");
     }
     } else {
-        sendApiError(401, "Unauthorized");
+        sendUnauthorized("Sessão inválida");
     }
 }
 
@@ -3691,7 +3706,7 @@ if ($path === '/api/frontend/trpc/vip.receiveAll') {
         }
     }
     } else {
-        sendApiError(401, "Unauthorized");
+        sendUnauthorized("Sessão inválida");
     }
 }
 if ($path === '/api/frontend/trpc/favorite.create') {
@@ -3982,15 +3997,7 @@ if ($path === '/api/frontend/trpc/withdraw.createOrder') {
     $rotaEncontrada = true;
     $user = getCurrentUser($mysqli);
     if (!$user) {
-         header('Content-Type: application/json');
-         echo json_encode([
-            "error" => [
-                "message" => "Unauthorized",
-                "code" => -32001,
-                "data" => ["code" => "UNAUTHORIZED", "httpStatus" => 401]
-            ]
-         ]);
-         exit;
+         sendUnauthorized("Sessão inválida");
     }
     $trpcInput = getTrpcInput();
     $dataInput = $trpcInput['json'] ?? [];
@@ -6534,9 +6541,7 @@ if ($path === '/api/frontend/trpc/redeemCode.info') {
     }
     $user = getCurrentUser($mysqli);
     if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
+        sendUnauthorized("Sessão inválida");
     }
     $stmt = $mysqli->prepare("SELECT id, nome, status, qtd_insert, range_valor FROM cupom WHERE nome = ? LIMIT 1");
     $stmt->bind_param("s", $code);
@@ -6695,9 +6700,7 @@ if ($path === '/api/frontend/trpc/invite.reward') {
     $rotaEncontrada = true;
     $user = getCurrentUser($mysqli);
     if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
+        sendUnauthorized("Sessão inválida");
     }
     $available = floatval($user['saldo_afiliados']);
     $config_afiliados_qry = "SELECT minResgate FROM afiliados_config WHERE id = 1";
@@ -6733,9 +6736,7 @@ if ($path === '/api/frontend/trpc/deposit.create' || $path === '/api/frontend/tr
     $rotaEncontrada = true;
     $user = getCurrentUser($mysqli);
     if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
+        sendUnauthorized("Sessão inválida");
     }
     $trpcInput = getTrpcInput();
     $dataInput = $trpcInput['json'] ?? [];
@@ -7190,7 +7191,7 @@ if ($path === '/api/frontend/trpc/agency.reward') {
              sendTrpcResponse(["success" => false, "message" => "Saldo insuficiente"]);
         }
     } else {
-        sendTrpcResponse(["error" => "Unauthorized"], 401);
+        sendUnauthorized("Sessão inválida");
     }
 }
 if ($path === '/api/frontend/trpc/agency.myAchievement') {
@@ -7394,7 +7395,7 @@ if ($path === '/api/frontend/trpc/agency.myCommission') {
     $rotaEncontrada = true;
     $user = getCurrentUser($mysqli);
     if (!$user) {
-        sendApiError(401, "Unauthorized");
+        sendUnauthorized("Sessão inválida");
     }
     $input = getTrpcInput();
     $json = $input['json'] ?? $input;
@@ -8120,7 +8121,7 @@ if ($path === '/api/frontend/trpc/game.login') {
             sendApiError(400, "gameId não fornecido");
         }
     } else {
-         sendApiError(401, "Sessão inválida");
+         sendUnauthorized("Sessão inválida");
     }
 }
 if ($path === '/api/frontend/trpc/user.getHasFirstRechargeAd') {
