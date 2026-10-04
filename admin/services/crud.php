@@ -1016,16 +1016,38 @@ function distribution($code) {
  */
 function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
 {
-    global $data_playfiver;
+    global $data_playfiver, $mysqli;
     $keys = $data_playfiver;
     if (!$keys || empty(trim($keys['url'] ?? '')) || empty(trim($keys['agent_token'] ?? '')) || empty(trim($keys['agent_secret'] ?? '')) || empty(trim($keys['agent_code'] ?? ''))) {
         return [ 'gameURL' => null, 'error' => 'Credenciais da PlayFiver não configuradas' ];
     }
-    $provedor = strtoupper(trim($provedor));
+    $game = trim((string)$game);
+    $provedorOriginal = strtoupper(trim($provedor));
+    // Codigo real no catalogo da PlayFiver (games.pf_code/pf_original), preenchido
+    // a partir de GET /api/v2/games. Prevalece sobre o mapa legado abaixo.
+    $pfCode = null;
+    $pfOriginal = null;
+    if (isset($mysqli) && $mysqli instanceof mysqli) {
+        $stmtPf = $mysqli->prepare("SELECT pf_code, pf_original, status FROM games WHERE game_code = ? AND provider = ? LIMIT 1");
+        if ($stmtPf) {
+            $stmtPf->bind_param("ss", $game, $provedorOriginal);
+            $stmtPf->execute();
+            $resPf = $stmtPf->get_result();
+            $rowPf = ($resPf && $resPf->num_rows > 0) ? $resPf->fetch_assoc() : null;
+            $stmtPf->close();
+            if ($rowPf) {
+                if ((int)$rowPf['status'] !== 1 || empty($rowPf['pf_code'])) {
+                    return [ 'gameURL' => null, 'error' => 'Jogo indisponível no momento' ];
+                }
+                $pfCode = trim($rowPf['pf_code']);
+                $pfOriginal = ($rowPf['pf_original'] !== null && $rowPf['pf_original'] !== '') ? (int)$rowPf['pf_original'] : null;
+            }
+        }
+    }
+    $provedor = $provedorOriginal;
     if ($provedor === 'KKGAME' || $provedor === 'PG') {
         $provedor = 'PGSOFT';
     }
-    $game = trim((string)$game);
     $mapaLegado = [
         'fortune-tiger' => '126', 'fortunetiger' => '126',
         'fortune-ox' => '98', 'fortuneox' => '98',
@@ -1051,15 +1073,25 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
         'candy-burst' => '70', 'captains-bounty' => '54',
         'cash-mania' => '1682240',
     ];
-    $gameClean = strtolower($game);
-    if (isset($mapaLegado[$gameClean])) {
-        $game = $mapaLegado[$gameClean];
+    if ($pfCode !== null) {
+        $game = $pfCode;
+    } else {
+        // Fallback legado para jogos sem mapeamento no catalogo
+        $gameClean = strtolower($game);
+        if (isset($mapaLegado[$gameClean])) {
+            $game = $mapaLegado[$gameClean];
+        }
     }
     // Providers considerados originais na PlayFiver
     $providersOriginais = ['CQ9','JDB','FC','TD','SG','ACEWIN'];
     $isOriginal = in_array($provedor, $providersOriginais, true);
     // Muitos títulos PGSOFT operam em clone; tratar como não-original
     if ($provedor === 'PGSOFT') { $isOriginal = false; }
+    // A API valida game_original contra o proprio catalogo: se errar, responde
+    // "jogo em manutencao". Usa o flag oficial quando conhecido.
+    if ($pfOriginal !== null) {
+        $isOriginal = (bool)$pfOriginal;
+    }
     
     $data = array(
         'method'        => 'game_launch',
@@ -1110,6 +1142,11 @@ function pegarLinkJogoApiPlayFiver($provedor, $game, $email, $saldo)
                 'error' => 'URL do jogo não encontrada'
             );
         }
+    } elseif (is_array($data_response)) {
+        // Resposta JSON definitiva da API (jogo inexistente, em manutencao, etc):
+        // nao ha o que re-tentar, evita um segundo request inutil ao endpoint raiz.
+        $msgErro = $data_response['msg'] ?? $data_response['message'] ?? 'Erro no servidor PlayFiver';
+        $games = array('gameURL' => null, 'error' => $msgErro);
     } else {
         $fallbackPayload = array(
             'method'        => 'game_launch',

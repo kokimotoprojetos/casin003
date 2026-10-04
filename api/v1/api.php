@@ -2192,6 +2192,8 @@ if ($path === '/api/frontend/trpc/vip.receive') {
         } else {
             sendApiError(400, "Not eligible");
         }
+    } else {
+        sendApiError(400, "Parâmetros inválidos");
     }
     } else {
         sendApiError(401, "Unauthorized");
