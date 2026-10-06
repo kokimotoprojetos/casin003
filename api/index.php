@@ -223,6 +223,52 @@ if (isset($cleanRoutes[$uri])) {
     exit;
 }
 
+// ---------------------------------------------------------------------------
+// Painel administrativo servido em /muitomoney (alias de /admin).
+// As rotas limpas sao espelhadas automaticamente, entao todo /admin/xxx
+// vira /muitomoney/xxx sem precisar manter duas listas.
+// ---------------------------------------------------------------------------
+$rawPath = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+if ($rawPath === '/muitomoney') {
+    // Sem a barra final, os links relativos do painel (href="usuarios.php",
+    // ajax/form-acessar.php) resolveriam contra a raiz e escapariam do alias.
+    header('Location: /muitomoney/');
+    exit;
+}
+$muitoRoutes = [];
+foreach ($cleanRoutes as $pathRota => $destino) {
+    if ($pathRota === '/admin') {
+        $muitoRoutes['/muitomoney'] = $destino;
+    } elseif (strpos($pathRota, '/admin/') === 0) {
+        $muitoRoutes['/muitomoney' . substr($pathRota, strlen('/admin'))] = $destino;
+    }
+}
+if (isset($muitoRoutes[$uri])) {
+    $alvo = $root . $muitoRoutes[$uri];
+    chdir(dirname($alvo));
+    require $alvo;
+    exit;
+}
+if (strpos($uri, '/muitomoney/') === 0) {
+    $relative = substr($uri, strlen('/muitomoney'));
+    if ($relative === '' || $relative === '/') {
+        $alvo = $root . '/admin/index.php';
+    } else {
+        $alvo = $root . '/admin' . $relative;
+        if (!preg_match('#\.[a-zA-Z0-9]+$#', $relative)) {
+            $alvo .= '.php';
+        }
+    }
+    if (!file_exists($alvo)) {
+        $alvo = $root . '/admin/index.php';
+    }
+    if (file_exists($alvo)) {
+        chdir(dirname($alvo));
+        require $alvo;
+        exit;
+    }
+}
+
 foreach ($slugRoutes as $pattern => $dest) {
     if (preg_match($pattern, $uri, $m)) {
         $_GET['slug'] = $m[1];
