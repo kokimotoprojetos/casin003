@@ -12,8 +12,11 @@ class TaskController extends Controller
     public $route = 'admin.task';
     public function index()
     {
-        $data = Task::first();
-        return view('admin.pages.task.index', compact('data'));
+        // A view admin/pages/task/index itera $tasks (@foreach($tasks ...)),
+        // mas este controller passava $data = Task::first(), entao a pagina
+        // dava "Undefined variable $tasks" (500).
+        $tasks = Task::all();
+        return view('admin.pages.task.index', compact('tasks'));
     }
 
     public function create($id=null)

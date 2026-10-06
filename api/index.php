@@ -140,7 +140,14 @@ $uri = rtrim($uri, '/') ?: '/';
 // (admin/services, services-prod e libraries continuam no deploy — sao
 // incluidos pelo codigo do site, nao sao paginas.)
 $rawPathAtual = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-if (strpos($rawPathAtual, '/admin') === 0) {
+// Rotas da API do painel Laravel (routes/web.php: prefix admin-api e
+// gozadinha). Precisam chegar no Laravel ANTES do redirecionamento de
+// /admin, senao '/admin-api/login' viraria '/muitomoney-api/login'.
+if (strpos($rawPathAtual, '/admin-api') === 0 || strpos($rawPathAtual, '/gozadinha') === 0) {
+    require __DIR__ . '/../bike/boot.php';
+    exit;
+}
+if ($rawPathAtual === '/admin' || strpos($rawPathAtual, '/admin/') === 0) {
     $destinoAdmin = '/muitomoney' . substr($rawPathAtual, strlen('/admin'));
     $qsAdmin = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
     header('Location: ' . $destinoAdmin . ($qsAdmin !== null && $qsAdmin !== '' ? '?' . $qsAdmin : ''), true, 302);

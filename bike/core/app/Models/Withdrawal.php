@@ -25,6 +25,14 @@ class Withdrawal extends Model
         return $this->belongsTo(WithdrawMethod::class, 'method_id');
     }
 
+    // As views do painel (vindas do AVANT) chamam $w->payment_method, mas este
+    // model so tinha method(). A tabela tem method_id apontando para
+    // withdraw_methods, entao apontamos as duas para a mesma relacao.
+    public function payment_method()
+    {
+        return $this->belongsTo(WithdrawMethod::class, 'method_id');
+    }
+
     public function statusBadge(): Attribute
     {
         return new Attribute(

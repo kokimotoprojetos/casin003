@@ -1,6 +1,11 @@
 <?php
 
 use App\Lib\Captcha;
+// Helpers portados do projeto AVANT: eles referenciam Purchase:: e Image:: em
+// namespace global, entao os imports precisam existir aqui. Sem isto o painel
+// dava "Class Purchase not found" ao renderizar /muitomoney/customers.
+use App\Models\Purchase;
+use Intervention\Image\Facades\Image;
 use App\Lib\ClientInfo;
 use App\Lib\CurlRequest;
 use App\Lib\FileManager;

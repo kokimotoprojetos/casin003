@@ -50,7 +50,7 @@
                                             </td>
                                             <td>
                                                 <small>
-                                                    Status: <span class="badge @if($row->status == 2) badge-warning @elseif($row->status == 1) badge-success  @elseif($row->status == 3) badge-danger @endif" style="font-size: 8px">@if($row->status == 2)Pendente@elseif($row->status == 1)Aprovado@elseif($row->status == 3)Rejeitado@endif</span> <br>
+                                                    Status: <span class="badge @if($row->status == 2) badge-warning @elseif($row->status == 1) badge-success  @elseif($row->status == 3) badge-danger @endif" style="font-size: 8px">{{ $row->status == 2 ? 'Pendente' : ($row->status == 1 ? 'Aprovado' : ($row->status == 3 ? 'Rejeitado' : '')) }}</span> <br>
                                                 </small>
                                             </td>
                                             <td>

@@ -205,6 +205,13 @@ Route::prefix('muitomoney')->middleware('admin', 'auth.session', 'admin.ip')->gr
     Route::get('payment/pending', [ManageUserController::class, 'pendingPayment'])->name('admin.payment.pending');
     Route::get('payment/approved', [ManageUserController::class, 'approvedPayment'])->name('admin.payment.approved');
     Route::get('payment/rejected', [ManageUserController::class, 'rejectedPayment'])->name('admin.payment.rejected');
+    // A view admin/pages/payment/list chama route('payment.status.change.approved')
+    // e route('payment.status.change.rejected'), mas estas rotas nao existiam —
+    // a pagina dava 500 com "Route not defined". Os metodos no controller ja
+    // existiam (paymentStatusApproved/Rejected/Pending).
+    Route::get('payment/status/approved/{id}', [ManageUserController::class, 'paymentStatusApproved'])->name('payment.status.change.approved');
+    Route::get('payment/status/rejected/{id}', [ManageUserController::class, 'paymentStatusRejected'])->name('payment.status.change.rejected');
+    Route::get('payment/status/pending/{id}', [ManageUserController::class, 'paymentStatusPending'])->name('payment.status.change.pending');
     Route::get('setting', [SettingController::class, 'index'])->name('admin.setting.index');
     Route::post('setting/insert-update', [SettingController::class, 'insert_or_update'])->name('admin.setting.insert');
     Route::get('plan', [PlanController::class, 'index'])->name('admin.plan.index');
