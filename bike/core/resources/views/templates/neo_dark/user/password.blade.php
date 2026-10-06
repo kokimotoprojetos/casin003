@@ -1,0 +1,50 @@
+@extends($activeTemplate . 'layouts.master')
+@section('content')
+    <div class="pt-150 pb-150">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+
+                    <div class="card card-bg">
+                        <div class="card-body">
+
+                            <form action="" method="post">
+                                @csrf
+                                <div class="form-group">
+                                    <label class="form-label">@lang('Senha atual')</label>
+                                    <input type="password" class="form-control form--control" name="current_password" required autocomplete="current-password">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">@lang('Senha')</label>
+                                    <input type="password" class="form-control form--control" name="password" required autocomplete="current-password">
+                                    @if ($general->secure_password)
+                                        <div class="input-popup">
+                                            <p class="error lower">@lang('1 letra mínima no mínimo')</p>
+                                            <p class="error capital">@lang('1 letra definida no mínimo')</p>
+                                            <p class="error number">@lang('1 número mínimo')</p>
+                                            <p class="error special">@lang('Mínimo de 1 caractere especial')</p>
+                                            <p class="error minimum">@lang('Senha de 6 caracteres')</p>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">@lang('Confirme sua senha')</label>
+                                    <input type="password" class="form-control form--control" name="password_confirmation" required autocomplete="current-password">
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">@lang('Enviar')</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@if ($general->secure_password)
+    @push('script-lib')
+        <script src="{{ asset('assets/global/js/secure_password.js') }}"></script>
+    @endpush
+@endif

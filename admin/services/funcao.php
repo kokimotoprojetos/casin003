@@ -79,10 +79,9 @@ if (php_sapi_name() != "cli") {
     $login = url_sistema() . '/public/login';
 
     // URLs do painel administrativo
-    // Servido em /muitomoney (alias definido em api/index.php). Todos os
-    // $painel_adm_* sao derivados daqui, entao basta mudar esta linha para
-    // mover o painel inteiro (redirecionamentos pos-login, links absolutos,
-    // checa_login_adm). Os links internos do painel ja eram relativos.
+    // A antiga UI em /admin/*.php saiu do deploy; o painel e o do projeto BIKE
+    // (Laravel), servido em /muitomoney. Qualquer redirect que ainda use
+    // $painel_adm cai no lugar certo.
     $painel_adm = $url_base . 'muitomoney/';
     $painel_adm_temas = $painel_adm . 'temas.php';
     $painel_adm_acessar = $painel_adm . 'auth-login.php';

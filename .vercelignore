@@ -8,3 +8,33 @@ errorlog.log
 daanrox.txt
 *.log
 *.bak
+
+# Thumbnails da API antiga de jogos (nenhuma URL do site aponta pra la)
+igamewin/*
+
+# Codigo morto: generateQRCode_pix() nunca e chamada; o QR real usa
+# api/v1/phpqrcode.php. Sao 432 arquivos (360 .dat do phpqrcode).
+admin/libraries/*
+
+# Nao referenciado pelo site
+versionControl/*
+
+# Log acumulado de 19MB
+callback/webhook_log.txt
+
+# Variantes RTL do tema do painel (ingles/arabico)
+panel-assets/admin/app-assets/css-rtl/*
+
+# Docs/CI/stubs do vendor do Laravel: nunca lidos em runtime.
+# O autoload carrega so .php e vendor/composer/*.json, que seguem indo.
+bike/core/vendor/*.txt
+bike/core/vendor/*.yml
+bike/core/vendor/*.yaml
+bike/core/vendor/*.stub
+bike/core/vendor/*.sh
+bike/core/vendor/*.editorconfig
+bike/core/vendor/*.gitignore
+bike/core/vendor/*.gitattributes
+bike/core/vendor/*.dist
+bike/core/tests/*
+bike/core/database/*

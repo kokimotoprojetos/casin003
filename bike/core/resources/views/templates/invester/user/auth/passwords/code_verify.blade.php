@@ -1,0 +1,38 @@
+@extends($activeTemplate.'layouts.app')
+@section('panel')
+
+<!-- Account Section -->
+<section class="account-section position-relative">
+    <div class="container">
+        <div class="text-center">
+            <a href="{{ route('home') }}" class="d-block mb-3 mb-sm-4 auth-page-logo"><img src="{{ getImage(getFilePath('logoIcon').'/logo_2.webp') }}" alt="logo"></a>
+        </div>
+        <div class="d-flex justify-content-center">
+            <div class="verification-code-wrapper">
+                <div class="verification-area">
+                    <h5 class="pb-3 text-center border-bottom">@lang('Verifique o endereço de e-mail')</h5>
+                    <form action="{{ route('user.password.verify.code') }}" method="POST" class="submit-form">
+                        @csrf
+                        <p class="verification-text">@lang('Um código de verificação de 6 dígitos enviado para seu endereço de e-mail') :  {{ showEmailAddress($email) }}</p>
+                        <input type="hidden" name="email" value="{{ $email }}">
+
+                        @include($activeTemplate.'partials.verification_code')
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn--base w-100">@lang('Enviar')</button>
+                        </div>
+
+                        <div class="form-group">
+                            @lang('Por favor, verifique incluindo sua pasta de lixo eletrônico/spam. se não for encontrado, você pode')
+                            <a href="{{ route('user.password.request') }}" class="fw-bold link-color">@lang('Tente enviar novamente')</a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Account Section -->
+
+@endsection

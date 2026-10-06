@@ -31,6 +31,26 @@
       "check": true
     },
     {
+      "src": "^/panel-assets/(.*)",
+      "dest": "/panel-assets/$1",
+      "check": true
+    },
+    {
+      "src": "^/core/css/(.*)",
+      "dest": "/bike/core/css/$1",
+      "check": true
+    },
+    {
+      "src": "^/core/js/(.*)",
+      "dest": "/bike/core/js/$1",
+      "check": true
+    },
+    {
+      "src": "^/core/img/(.*)",
+      "dest": "/bike/core/img/$1",
+      "check": true
+    },
+    {
       "src": "^/images/(.*)",
       "dest": "/images/$1",
       "check": true

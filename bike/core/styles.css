@@ -1,0 +1,37 @@
+/* Core Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* Base Colors */
+.base--color {
+    color: #9400FF;
+}
+
+.bg--light {
+    background: #f8f9fa;
+}
+
+/* Utility */
+.text-center { text-align: center; }
+.pt-120 { padding-top: 120px; }
+.pb-120 { padding-bottom: 120px; }

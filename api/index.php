@@ -134,6 +134,19 @@ register_shutdown_function(function () {
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uri, '/') ?: '/';
 
+// A antiga UI do painel (/admin/*.php) foi removida do deploy; o painel agora
+// e o do projeto BIKE, servido em /muitomoney. Redireciona antes do
+// $cleanRoutes, senao ele tentaria dar require em arquivos que nao existem.
+// (admin/services, services-prod e libraries continuam no deploy — sao
+// incluidos pelo codigo do site, nao sao paginas.)
+$rawPathAtual = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+if (strpos($rawPathAtual, '/admin') === 0) {
+    $destinoAdmin = '/muitomoney' . substr($rawPathAtual, strlen('/admin'));
+    $qsAdmin = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+    header('Location: ' . $destinoAdmin . ($qsAdmin !== null && $qsAdmin !== '' ? '?' . $qsAdmin : ''), true, 302);
+    exit;
+}
+
 $cleanRoutes = [
     '/health'                     => '/api/health.php',
     '/api/ping'                   => '/api/ping.php',
@@ -224,49 +237,18 @@ if (isset($cleanRoutes[$uri])) {
 }
 
 // ---------------------------------------------------------------------------
-// Painel administrativo servido em /muitomoney (alias de /admin).
-// As rotas limpas sao espelhadas automaticamente, entao todo /admin/xxx
-// vira /muitomoney/xxx sem precisar manter duas listas.
+// Painel administrativo = projeto BIKE (bike/core, Laravel), servido em
+// /muitomoney*. Todas as rotas e views do painel sao dele, nao deste projeto.
 // ---------------------------------------------------------------------------
 $rawPath = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-if ($rawPath === '/muitomoney') {
-    // Sem a barra final, os links relativos do painel (href="usuarios.php",
-    // ajax/form-acessar.php) resolveriam contra a raiz e escapariam do alias.
-    header('Location: /muitomoney/');
+if ($rawPath === '/muitomoney' || $rawPath === '/muitomoney/') {
+    // A rota '/' do Laravel redireciona pra route('admin.login') = /muitomoney/login
+    header('Location: /muitomoney/login');
     exit;
 }
-$muitoRoutes = [];
-foreach ($cleanRoutes as $pathRota => $destino) {
-    if ($pathRota === '/admin') {
-        $muitoRoutes['/muitomoney'] = $destino;
-    } elseif (strpos($pathRota, '/admin/') === 0) {
-        $muitoRoutes['/muitomoney' . substr($pathRota, strlen('/admin'))] = $destino;
-    }
-}
-if (isset($muitoRoutes[$uri])) {
-    $alvo = $root . $muitoRoutes[$uri];
-    chdir(dirname($alvo));
-    require $alvo;
+if (strpos($rawPath, '/muitomoney') === 0) {
+    require __DIR__ . '/../bike/boot.php';
     exit;
-}
-if (strpos($uri, '/muitomoney/') === 0) {
-    $relative = substr($uri, strlen('/muitomoney'));
-    if ($relative === '' || $relative === '/') {
-        $alvo = $root . '/admin/index.php';
-    } else {
-        $alvo = $root . '/admin' . $relative;
-        if (!preg_match('#\.[a-zA-Z0-9]+$#', $relative)) {
-            $alvo .= '.php';
-        }
-    }
-    if (!file_exists($alvo)) {
-        $alvo = $root . '/admin/index.php';
-    }
-    if (file_exists($alvo)) {
-        chdir(dirname($alvo));
-        require $alvo;
-        exit;
-    }
 }
 
 foreach ($slugRoutes as $pattern => $dest) {
